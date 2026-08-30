@@ -1,0 +1,28 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+src/*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+
+# Runtime secrets and local identity — never commit
+.anima/
+*.key
+wallet.json
+credentials.json
+
+# Local Sibyl stores used during development
+*.db
+*.db-wal
+*.db-shm
+
+# Machine-local config
+anima.local.toml
+.env
+

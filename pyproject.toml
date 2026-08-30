@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anima"
+version = "0.1.0"
+description = "A local-first persistent AI being. The LLM is a brain. Sibyl is memory. Anima is the organism."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "kimikodes" }]
+keywords = ["ai", "agent", "memory", "sibyl", "cli", "local-first", "base"]
+dependencies = [
+  "sibyl-memory-client>=0.7.0",
+  "textual>=8.0.0",
+  "rich>=13.0.0",
+  "httpx>=0.27.0",
+  "pydantic>=2.0.0",
+  "web3>=7.0.0",
+  "eth-account>=0.13.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "pillow>=10.0.0"]
+ui = ["pillow>=10.0.0"]
+
+[project.scripts]
+anima = "anima.app.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --tb=short"
+markers = [
+  "live: talks to a real network or LLM",
+]
+
+[tool.anima]
+# Product constants live in code; this table is documentation.
+identity_store = "sibyl"
