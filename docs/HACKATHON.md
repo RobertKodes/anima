@@ -17,6 +17,8 @@ There is no `MEMORY.md`. Deleting markdown does not delete the being. `anima --a
 ## Install and demo
 
 ```bash
+git clone https://github.com/RobertKodes/anima.git
+cd anima
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -e .

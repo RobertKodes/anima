@@ -1,6 +1,6 @@
 # Submission packet
 
-Anima is ready to submit once the public GitHub URL exists. This page is the operator checklist.
+Anima is ready to submit. Public repo: https://github.com/RobertKodes/anima
 
 ## Repo
 
@@ -21,7 +21,7 @@ Anima is ready to submit once the public GitHub URL exists. This page is the ope
 ## Clone and run
 
 ```bash
-git clone <PUBLIC_REPO_URL>
+git clone https://github.com/RobertKodes/anima.git
 cd anima
 python3.12 -m venv .venv
 source .venv/bin/activate
@@ -48,11 +48,10 @@ Killer demo (unattended): `python scripts/demo_flow.py`
 
 ## What you still do as the operator
 
-1. If `gh auth status` is invalid: `gh auth refresh -h github.com`, then the commands in [`PUBLISH.md`](PUBLISH.md).
-2. Prefer an unedited 2–5 min screen capture of the recall beat ([`RECORD_DEMO.md`](RECORD_DEMO.md)).
-3. Optional multiplier: fund a Base Sepolia wallet, set `dry_run = false`, run `/base action intent=sepolia-note value=0 --yes` in the live video.
-4. Post the two drafts in [`POSTS.md`](POSTS.md) tagging **@sibylcap** and **@base**.
-5. Open your private build-page link from registration and mark ready before **10 Sep 2026, 23:59 UTC**. Registration itself closes **31 Aug 2026**.
+1. Prefer an unedited 2–5 min screen capture of the recall beat ([`RECORD_DEMO.md`](RECORD_DEMO.md)) for the form. `recordings/hackathon_demo.mp4` is the assembled backup (2:37, timestamp + commit `af48a3c`).
+2. Optional multiplier: fund a Base Sepolia wallet, set `dry_run = false`, run `/base action intent=sepolia-note value=0 --yes` in the live video.
+3. Post the two drafts in [`POSTS.md`](POSTS.md) tagging **@sibylcap** and **@base**.
+4. Register before **31 Aug 2026, 23:59 UTC** if you have not. Open your private build-page link and mark ready before **10 Sep 2026, 23:59 UTC**.
 
 ## Tests
 

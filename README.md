@@ -56,6 +56,8 @@ The product spec is [`docs/PRD_CLI_v0.1.md`](docs/PRD_CLI_v0.1.md) (from `CLI_Fi
 ## Install (public)
 
 ```bash
+git clone https://github.com/RobertKodes/anima.git
+cd anima
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -e .
