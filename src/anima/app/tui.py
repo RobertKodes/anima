@@ -98,6 +98,7 @@ class AnimaApp(App):
         log.write("[#8a7a68]────────────────────────────────────────────[/]")
         if boot.birth:
             log.write("[#e8a04a]birth[/]  No persistent identity found.")
+            log.write("[#8a7a68]hint[/]  Introduce yourself · try /skills · /fetch a URL when enabled")
         else:
             log.write("[#e8a04a]return[/]  A life is already underway in Sibyl.")
         for notice in boot.notices:

@@ -31,7 +31,17 @@ from anima.memory.writer import (
     save_last_trace,
     update_self,
 )
+from anima.tools.permissions import may
 from anima.tools.registry import CapabilityRegistry
+from anima.tools.web import (
+    crawl_site,
+    explore_site,
+    extract_url,
+    fetch_url,
+    format_crawl,
+    format_explore,
+    format_fetch,
+)
 
 
 class Runtime:
@@ -45,11 +55,70 @@ class Runtime:
         self.registry = BrainRegistry(list(cfg.brains), cfg.primary_brain_id, data_dir=cfg.data_dir)
         self.instinct = InstinctBrain("instinct")
         self.capabilities = CapabilityRegistry()
-        if cfg.allow_shell:
-            self.capabilities.grant("shell")
+        self._apply_capability_grants()
         self.base = BaseAdapter(cfg.base)
         self.session_messages: list[tuple[str, str]] = []
         self._birth_done = False
+
+    def _apply_capability_grants(self) -> None:
+        grants = {
+            "shell": self.cfg.allow_shell,
+            "web_fetch": self.cfg.allow_web_fetch,
+            "web_crawl": self.cfg.allow_web_crawl,
+            "explore": self.cfg.allow_explore,
+        }
+        for cap_id, enabled in grants.items():
+            if enabled:
+                self.capabilities.grant(cap_id)
+
+    def grant_capability(self, cap_id: str, *, persist: bool = True) -> None:
+        self.capabilities.grant(cap_id)
+        flag_map = {
+            "shell": "allow_shell",
+            "web_fetch": "allow_web_fetch",
+            "web_crawl": "allow_web_crawl",
+            "explore": "allow_explore",
+        }
+        if persist and cap_id in flag_map:
+            setattr(self.cfg, flag_map[cap_id], True)
+            from anima.config.schema import save_config
+
+            save_config(self.cfg)
+
+    def revoke_capability(self, cap_id: str, *, persist: bool = True) -> None:
+        self.capabilities.revoke(cap_id)
+        flag_map = {
+            "shell": "allow_shell",
+            "web_fetch": "allow_web_fetch",
+            "web_crawl": "allow_web_crawl",
+            "explore": "allow_explore",
+        }
+        if persist and cap_id in flag_map:
+            setattr(self.cfg, flag_map[cap_id], False)
+            from anima.config.schema import save_config
+
+            save_config(self.cfg)
+
+    def run_web_skill(self, kind: str, url: str) -> tuple[str, list[TraceItem]]:
+        cap_id = kind
+        allowed, reason = may(self.capabilities, cap_id)
+        if not allowed:
+            return f"Skill `{cap_id}` is off. Try `/capabilities grant {cap_id}` or `anima onboard`.", []
+        if kind == "web_fetch":
+            result = fetch_url(url)
+            text = format_fetch(result)
+        elif kind == "web_crawl":
+            result = crawl_site(url)
+            text = format_crawl(result)
+        elif kind == "explore":
+            result = explore_site(url)
+            text = format_explore(result)
+        else:
+            return f"Unknown web skill {kind!r}.", []
+        traces = [TraceItem("tool", cap_id, url, text[:160])]
+        if not self.amnesia:
+            record_capability(self.memory, cap_id, "used", url)
+        return text, traces
 
     def boot(self) -> Reply:
         notices = []
@@ -121,7 +190,27 @@ class Runtime:
         package, mem_traces = build_context(self.memory, intent, amnesia=self.amnesia)
         decision = route(intent, package, self.registry)
         brain_id = decision.brain_id
-        reply_text, latency, used_instinct = self._think(user_text, package, brain_id, decision.bounded)
+        tool_traces: list[TraceItem] = []
+
+        if intent.kind in {"web_fetch", "web_crawl", "explore"}:
+            url = intent.slots.get("url") or extract_url(user_text)
+            if not url:
+                return Reply(text="I need a URL. Example: /fetch https://example.com")
+            web_text, tool_traces = self.run_web_skill(intent.kind, url)
+            if web_text.startswith("Skill `"):
+                return Reply(text=web_text, traces=DecisionTrace(intent=intent.kind, brain_id="policy", tools=tool_traces))
+            prompt = (
+                package.as_prompt()
+                + "\n\nWEB SKILL OUTPUT (use this; do not invent beyond it):\n"
+                + web_text
+                + "\n\nUSER:\n"
+                + user_text
+            )
+            reply_text, latency, used_instinct = self._complete_prompt(
+                prompt, package, brain_id, fallback=web_text
+            )
+        else:
+            reply_text, latency, used_instinct = self._think(user_text, package, brain_id, decision.bounded)
 
         if intent.kind == "base_action" and not self.amnesia:
             action_reply, action_notice = self._maybe_base(user_text, package, confirm=False)
@@ -134,7 +223,7 @@ class Runtime:
             intent=intent.kind,
             brain_id="instinct" if used_instinct else brain_id,
             memories=mem_traces,
-            tools=[TraceItem("router", brain_id, decision.reason)],
+            tools=[TraceItem("router", brain_id, decision.reason), *tool_traces],
             policy="; ".join(notices),
             amnesia=self.amnesia,
         )
@@ -225,6 +314,21 @@ class Runtime:
             record_capability(self.memory, brain_id, "primary", "brain transplant")
             update_self(self.memory, {"primary_brain": brain_id})
 
+    def _complete_prompt(
+        self, prompt: str, package: ContextPackage, brain_id: str, *, fallback: str = ""
+    ) -> tuple[str, int, bool]:
+        system = system_preamble(package.amnesia)
+        try:
+            brain = self.registry.get(brain_id)
+        except KeyError:
+            brain = self.instinct
+        if isinstance(brain, InstinctBrain):
+            return fallback or "Done.", 1, True
+        result = brain.complete(prompt, system=system)
+        if result.ok and result.text.strip():
+            return result.text.strip(), result.latency_ms, False
+        return fallback or "I could not summarize that page.", result.latency_ms or 1, True
+
     def _think(self, user_text: str, package: ContextPackage, brain_id: str, bounded: bool) -> tuple[str, int, bool]:
         system = system_preamble(package.amnesia)
         context = package.as_prompt()
@@ -287,6 +391,17 @@ def parse_intent(text: str) -> Intent:
         for phrase in ("who am i", "do you remember me", "what's my name", "what is my name")
     ):
         return Intent("ask_memory", stripped, {})
+    url = extract_url(stripped)
+    if url:
+        if any(word in lowered for word in ("crawl", "spider", "walk the site")):
+            return Intent("web_crawl", stripped, {"url": url})
+        if any(word in lowered for word in ("explore", "links on", "map this", "what links")):
+            return Intent("explore", stripped, {"url": url})
+        if any(
+            word in lowered
+            for word in ("fetch", "read", "open", "get", "summarize", "look at", "check", "browse", "visit")
+        ):
+            return Intent("web_fetch", stripped, {"url": url})
     return Intent("chat", stripped, {})
 
 

@@ -48,6 +48,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--classic", action="store_true", help="Config-only setup wizard (no live probe)")
     parser.add_argument("--launch", action="store_true", help="Open the graphical CLI after onboard")
     parser.add_argument(
+        "--skills",
+        metavar="LIST",
+        help="Comma-separated skills for onboard: web_fetch,web_crawl,explore",
+    )
+    parser.add_argument(
         "verb",
         nargs="?",
         help="onboard | setup | doctor | chat | a /command (for example /status)",
@@ -74,6 +79,7 @@ def main(argv: list[str] | None = None) -> int:
             json_output=args.json,
             classic=use_classic,
             launch=args.launch,
+            skills=args.skills,
         )
 
     if _should_auto_onboard(args):
@@ -92,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
             endpoint=args.endpoint,
             skip_probe=args.skip_probe,
             launch=True,
+            skills=args.skills,
         )
 
     cfg = load_config(args.config, args.data)

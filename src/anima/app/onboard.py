@@ -16,6 +16,7 @@ from anima.cognition.cloud import CLOUD_PRESETS, brain_config_from_cloud, preset
 from anima.cognition.registry import build_brain
 from anima.config.schema import AnimaConfig, BrainConfig, config_exists, default_config, load_config, save_config
 from anima.config.secrets import save_brain_secret, secret_configured
+from anima.skills.catalog import SKILLS, apply_skill_grants, granted_skills
 
 PROBE_PROMPT = "Reply with the single word pong."
 PROBE_SYSTEM = "Be brief. Reply with exactly one word."
@@ -164,6 +165,7 @@ def run_onboard(
     json_output: bool = False,
     classic: bool = False,
     launch: bool = False,
+    skills: str | None = None,
 ) -> int:
     if classic:
         from anima.app.setup import run_setup
@@ -180,13 +182,16 @@ def run_onboard(
         console.print(
             Panel(
                 "[bold #e8a04a]ANIMA ONBOARD[/]\n"
-                "Detect a brain · live-test it · save config · meet your being\n\n"
-                "[dim]Inference first, then the rest of setup.[/]",
+                "[#f0d8b0]1[/] Brain  →  [#f0d8b0]2[/] Skills  →  [#f0d8b0]3[/] Save  →  [#f0d8b0]4[/] Meet your being\n\n"
+                "[dim]A short setup, then the graphical CLI opens.[/]",
                 border_style="#c45c26",
             )
         )
         if auto:
-            console.print("[dim]Auto mode — detecting the best available brain…[/]")
+            console.print("[dim]Step 1 · Brain — detecting the best available model…[/]")
+        elif console is not None:
+            console.print("\n[bold #e8a04a]Step 1 · Brain[/]")
+            console.print("[dim]Local models first, cloud optional, Instinct as fallback.[/]")
 
     candidate: BrainCandidate | None = None
     probe: dict[str, Any] = {}
@@ -294,6 +299,11 @@ def run_onboard(
                 return 1
 
         apply_brain_candidate(cfg, candidate)
+        if configured and existing is not None:
+            cfg.allow_web_fetch = existing.allow_web_fetch
+            cfg.allow_web_crawl = existing.allow_web_crawl
+            cfg.allow_explore = existing.allow_explore
+        _configure_skills(cfg, console, auto, skills)
     except ValueError as exc:
         if json_output:
             print(json.dumps({"ok": False, "error": str(exc)}))
@@ -312,9 +322,50 @@ def run_onboard(
         print(json.dumps(summary, indent=2))
     elif console is not None:
         _print_success(console, cfg, candidate, probe, path)
+        enabled = ", ".join(s.capability for s in granted_skills(cfg)) or "none"
+        console.print(f"[dim]Skills enabled:[/] {enabled}")
         if auto and not launch:
             console.print("\n[bold]Tip:[/] run [bold #e8a04a]anima onboard --launch[/] to open the graphical CLI.")
     return _maybe_launch(cfg, launch=launch, json_output=json_output)
+
+
+def _step(console: Console | None, title: str) -> None:
+    if console is not None:
+        console.print(f"\n[bold #e8a04a]{title}[/]")
+
+
+def _configure_skills(
+    cfg: AnimaConfig,
+    console: Console | None,
+    auto: bool,
+    skills_csv: str | None,
+) -> None:
+    if skills_csv:
+        parts = {part.strip().lower() for part in skills_csv.split(",") if part.strip()}
+        apply_skill_grants(
+            cfg,
+            fetch="web_fetch" in parts or "fetch" in parts,
+            crawl="web_crawl" in parts or "crawl" in parts,
+            explore="explore" in parts,
+        )
+        return
+
+    if auto:
+        apply_skill_grants(cfg, fetch=True, crawl=False, explore=True)
+        if console is not None:
+            console.print("[dim]Step 2 · Skills — web_fetch + explore enabled[/]")
+        return
+
+    _step(console, "Step 2 · Skills")
+    if console is not None:
+        console.print("Teach Anima to read the web. You can change these later with [bold]/capabilities[/].\n")
+        for skill in SKILLS:
+            console.print(f"  [dim]•[/] {skill.title} — {skill.summary}")
+        console.print("")
+        fetch = Confirm.ask("Enable web fetch?", default=True)
+        explore = Confirm.ask("Enable explore?", default=True)
+        crawl = Confirm.ask("Enable web crawl (deeper, same-site)?", default=False)
+        apply_skill_grants(cfg, fetch=fetch, crawl=crawl, explore=explore)
 
 
 def _auto_select(
@@ -341,7 +392,7 @@ def _auto_select(
             endpoint=endpoint,
             api_key=api_key,
             oauth_token=oauth_token,
-            console=console,
+            console=None,
         )
         probe = probe_brain(candidate, data_dir=root, skip=skip_probe)
         if probe["ok"] or skip_probe:
@@ -449,7 +500,7 @@ def _build_cloud_candidate(
         )
     resolved_auth = resolved_auth or "api_key"
 
-    resolved_model = model
+    resolved_model = model or (preset.default_model if preset_id != "custom" else None)
     if console is not None and not resolved_model and preset_id == "custom":
         resolved_model = Prompt.ask("Model id")
     elif console is not None and not resolved_model and preset.default_model:

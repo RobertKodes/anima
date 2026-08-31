@@ -182,12 +182,67 @@ def cmd_brain(runtime: Runtime, args: list[str]) -> Reply:
     return Reply(text="Usage: /brain add | /brain test <id> | /brain use <id>")
 
 
-def cmd_capabilities(runtime: Runtime, _args: list[str]) -> Reply:
+def cmd_capabilities(runtime: Runtime, args: list[str]) -> Reply:
+    if args and args[0] == "grant":
+        if len(args) < 2:
+            return Reply(text="Usage: /capabilities grant <web_fetch|web_crawl|explore|shell>")
+        cap_id = args[1]
+        try:
+            runtime.grant_capability(cap_id)
+        except KeyError:
+            return Reply(text=f"Unknown capability {cap_id!r}. Try /skills.")
+        return Reply(text=f"Granted {cap_id}. Saved to config.", notices=[f"{cap_id} granted"])
+    if args and args[0] == "revoke":
+        if len(args) < 2:
+            return Reply(text="Usage: /capabilities revoke <id>")
+        cap_id = args[1]
+        try:
+            runtime.revoke_capability(cap_id)
+        except KeyError:
+            return Reply(text=f"Unknown capability {cap_id!r}.")
+        return Reply(text=f"Revoked {cap_id}. Saved to config.")
     lines = ["Capabilities:"]
     for item in runtime.capabilities.as_dicts():
         flag = "on" if item["granted"] else "off"
         lines.append(f"- {item['id']}: {item['title']} [{flag}] {item['summary']}")
+    lines.append("\nGrant: /capabilities grant web_fetch")
     return Reply(text="\n".join(lines), data={"capabilities": runtime.capabilities.as_dicts()})
+
+
+def cmd_skills(_runtime: Runtime, _args: list[str]) -> Reply:
+    from anima.skills.catalog import SKILLS
+
+    lines = ["Skills Anima can learn:"]
+    for skill in SKILLS:
+        lines.append(f"- {skill.title} ({skill.capability})")
+        lines.append(f"  {skill.summary}")
+        lines.append(f"  Command: {skill.slash}")
+    lines.append("\nEnable during onboarding or: /capabilities grant web_fetch")
+    return Reply(text="\n".join(lines))
+
+
+def cmd_fetch(runtime: Runtime, args: list[str]) -> Reply:
+    url = args[0] if args else ""
+    if not url:
+        return Reply(text="Usage: /fetch <url>")
+    text, _ = runtime.run_web_skill("web_fetch", url)
+    return Reply(text=text)
+
+
+def cmd_crawl(runtime: Runtime, args: list[str]) -> Reply:
+    url = args[0] if args else ""
+    if not url:
+        return Reply(text="Usage: /crawl <url>")
+    text, _ = runtime.run_web_skill("web_crawl", url)
+    return Reply(text=text)
+
+
+def cmd_explore(runtime: Runtime, args: list[str]) -> Reply:
+    url = args[0] if args else ""
+    if not url:
+        return Reply(text="Usage: /explore <url>")
+    text, _ = runtime.run_web_skill("explore", url)
+    return Reply(text=text)
 
 
 def cmd_sleep(runtime: Runtime, _args: list[str]) -> Reply:
@@ -286,6 +341,11 @@ HELP = [
     ("/brain test <id>", "Health and capability probe."),
     ("/brain use <id>", "Switch primary brain; identity stays."),
     ("/capabilities", "Tools and permissions."),
+    ("/capabilities grant <id>", "Enable web_fetch, web_crawl, explore, shell."),
+    ("/skills", "Skills Anima can learn (web, explore)."),
+    ("/fetch <url>", "Fetch and read a public page."),
+    ("/crawl <url>", "Crawl same-site links."),
+    ("/explore <url>", "Summarize a page and list links."),
     ("/sleep", "Consolidate recent life into Sibyl."),
     ("/base status", "Network, wallet, policy."),
     ("/base action ...", "Prepare or execute an approved action."),
@@ -309,6 +369,10 @@ COMMANDS: dict[str, Handler] = {
     "/brains": cmd_brains,
     "/brain": cmd_brain,
     "/capabilities": cmd_capabilities,
+    "/skills": cmd_skills,
+    "/fetch": cmd_fetch,
+    "/crawl": cmd_crawl,
+    "/explore": cmd_explore,
     "/sleep": cmd_sleep,
     "/base": cmd_base,
     "/why": cmd_why,
@@ -332,6 +396,11 @@ SLASH_PREFIXES = [
     "/brain test ",
     "/brain use ",
     "/capabilities",
+    "/capabilities grant ",
+    "/skills",
+    "/fetch ",
+    "/crawl ",
+    "/explore ",
     "/sleep",
     "/base status",
     "/base wallet",

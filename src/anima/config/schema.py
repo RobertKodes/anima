@@ -51,6 +51,9 @@ class AnimaConfig(BaseModel):
     primary_brain_id: str = ""
     base: BaseChainConfig = Field(default_factory=BaseChainConfig)
     allow_shell: bool = False
+    allow_web_fetch: bool = False
+    allow_web_crawl: bool = False
+    allow_explore: bool = False
     log_path: Path | None = None
     amnesia: bool = False
 
@@ -133,6 +136,12 @@ def _merge(cfg: AnimaConfig, raw: dict[str, Any]) -> AnimaConfig:
         data["primary_brain_id"] = str(raw["primary_brain_id"])
     if "allow_shell" in raw:
         data["allow_shell"] = bool(raw["allow_shell"])
+    if "allow_web_fetch" in raw:
+        data["allow_web_fetch"] = bool(raw["allow_web_fetch"])
+    if "allow_web_crawl" in raw:
+        data["allow_web_crawl"] = bool(raw["allow_web_crawl"])
+    if "allow_explore" in raw:
+        data["allow_explore"] = bool(raw["allow_explore"])
     if "amnesia" in raw:
         data["amnesia"] = bool(raw["amnesia"])
     if "log_path" in raw:
@@ -183,6 +192,9 @@ def _to_toml(cfg: AnimaConfig) -> str:
         f'tenant_id = "{cfg.tenant_id}"\n'
         f'primary_brain_id = "{cfg.primary_brain_id}"\n'
         f"allow_shell = {str(cfg.allow_shell).lower()}\n"
+        f"allow_web_fetch = {str(cfg.allow_web_fetch).lower()}\n"
+        f"allow_web_crawl = {str(cfg.allow_web_crawl).lower()}\n"
+        f"allow_explore = {str(cfg.allow_explore).lower()}\n"
         f"amnesia = {str(cfg.amnesia).lower()}\n\n"
         "[base]\n"
         f'network = "{base.network}"\n'

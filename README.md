@@ -54,7 +54,7 @@ First launch runs onboarding automatically if you skip `anima onboard`. You meet
 - **Many brains, one being** — swap Ollama, llama.cpp, or the built-in Instinct brain without losing memory
 - **Graphical CLI** — conversation, status rail, `/why` inspectability, slash commands, command palette
 - **Base Sepolia rail** — dry-run by default; memory can refuse spends that break a stored policy
-- **Web companion** — optional local UI with `anima --ui`
+- **Web skills** — fetch, explore, and crawl public pages (opt-in during onboarding)
 
 ## Onboarding
 
@@ -62,8 +62,9 @@ Anima detects what is already on your machine, live-tests it with a real reply, 
 
 | Command | What it does |
 |---|---|
-| `anima onboard` | Interactive: detect brain → probe → save config |
-| `anima onboard --yes` | Non-interactive; picks the best available brain |
+| `anima onboard` | Interactive: brain → skills → save → launch TUI |
+| `anima onboard --yes --launch` | Auto-detect brain, enable web skills, open graphical CLI |
+| `anima onboard --skills web_fetch,explore` | Pick skills explicitly |
 | `anima onboard --json` | Machine-readable summary for scripts |
 | `anima setup` | Config-only wizard (no live probe) |
 | `anima doctor` | Health check: Sibyl, brains, optional tools |
@@ -90,6 +91,9 @@ Data lives in `~/.anima/` (or `%USERPROFILE%\.anima` on Windows). Override with 
 | `anima /status` | One-shot status |
 | `anima /why` | What shaped the last reply |
 | `anima /sleep` | Consolidate recent life into Sibyl |
+| `/fetch`, `/explore`, `/crawl` | Web skills (when enabled) |
+| `/skills` | List available skills |
+| `/capabilities grant web_fetch` | Enable a skill mid-session |
 | `anima --amnesia` | Talk without retrieval (store is not deleted) |
 
 **TUI keys:** tab slash hints · ctrl+p palette · F1 help · F3 sleep · ctrl+n new session · ctrl+c leave

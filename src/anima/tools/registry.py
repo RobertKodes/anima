@@ -27,6 +27,9 @@ class CapabilityRegistry:
                 Capability("sleep", "Sleep / consolidation", True, "Turn raw history into durable state."),
                 Capability("brains", "Multi-brain routing", True, "Register and swap cognitive models."),
                 Capability("base", "Base actions", True, "Prepare and execute approved onchain actions.", risk="high", needs_permission=True),
+                Capability("web_fetch", "Web fetch", False, "Read a public URL and summarize the page.", risk="medium", needs_permission=True),
+                Capability("web_crawl", "Web crawl", False, "Follow same-site links within safe limits.", risk="high", needs_permission=True),
+                Capability("explore", "Explore", False, "Map links and summarize a site from a seed URL.", risk="medium", needs_permission=True),
                 Capability("shell", "Shell", False, "Run local commands. Off until granted.", risk="high", needs_permission=True),
             ]
 
