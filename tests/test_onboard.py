@@ -1,4 +1,4 @@
-"""OpenClaw-style onboarding."""
+"""Onboarding flow tests."""
 
 from __future__ import annotations
 

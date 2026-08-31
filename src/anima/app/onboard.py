@@ -1,4 +1,4 @@
-"""OpenClaw-style onboarding: detect brains, live-probe, then write config."""
+"""Guided onboarding: detect brains, live-probe, then write config."""
 
 from __future__ import annotations
 
@@ -155,7 +155,7 @@ def run_onboard(
             Panel(
                 "[bold #e8a04a]ANIMA ONBOARD[/]\n"
                 "Detect a brain · live-test it · save config · meet your being\n\n"
-                "[dim]Like OpenClaw: inference first, then the rest of setup.[/]",
+                "[dim]Inference first, then the rest of setup.[/]",
                 border_style="#c45c26",
             )
         )
