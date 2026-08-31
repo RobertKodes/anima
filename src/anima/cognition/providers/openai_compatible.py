@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import httpx
 
@@ -17,12 +18,14 @@ class OpenAICompatibleBrain:
         model: str,
         timeout: float = 60.0,
         extra: dict | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         self.id = brain_id
         self.model = model
         self.endpoint = endpoint.rstrip("/")
         self.timeout = timeout
         self.extra = extra or {}
+        self.headers = headers or {}
 
     def complete(self, prompt: str, *, system: str = "", max_tokens: int = 400) -> Completion:
         url = self.endpoint + "/chat/completions"
@@ -39,7 +42,7 @@ class OpenAICompatibleBrain:
                 "temperature": 0.4,
             }
             payload.update(self.extra)
-            with httpx.Client(timeout=self.timeout) as client:
+            with httpx.Client(timeout=self.timeout, headers=self.headers) as client:
                 response = client.post(url, json=payload)
                 response.raise_for_status()
                 data = response.json()
@@ -60,9 +63,15 @@ class OpenAICompatibleBrain:
 
     def health(self) -> dict:
         try:
-            with httpx.Client(timeout=2.0) as client:
+            with httpx.Client(timeout=2.0, headers=self.headers) as client:
                 response = client.get(self.endpoint + "/models")
-            return {"id": self.id, "ok": response.status_code < 500, "endpoint": self.endpoint, "model": self.model}
+            return {
+                "id": self.id,
+                "ok": response.status_code < 500,
+                "endpoint": self.endpoint,
+                "model": self.model,
+                "auth": bool(self.headers.get("Authorization")),
+            }
         except Exception as exc:
             return {"id": self.id, "ok": False, "endpoint": self.endpoint, "error": str(exc)}
 

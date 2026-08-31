@@ -85,12 +85,42 @@ Data lives in `~/.anima/` (or `%USERPROFILE%\.anima` on Windows). Override with 
 | **Ollama** | Install and run Ollama; onboard picks a local model |
 | **llama.cpp** | Run `llama-server` on `:8080`; onboard detects it |
 | **Instinct** | Built-in offline brain for tests and first run |
+| **Cloud / API** | OpenAI, OpenRouter, Groq, Together, or custom OpenAI-compatible |
+
+### Local
 
 ```bash
 anima --brain ollama --model qwen3:1.7b
 anima /brain use qwen3-local
 anima /brains
 ```
+
+### Cloud / API / OAuth
+
+Onboard walks you through auth. Keys and tokens are stored in `~/.anima/secrets/brains/` — never in Sibyl or `config.toml`.
+
+| Auth | Use when |
+|---|---|
+| **API key** | Paste a key or pass `--api-key` |
+| **OAuth** | Paste an access token from the provider dashboard (`--oauth-token`) |
+| **Env** | Key already in environment (`OPENAI_API_KEY`, `OPENROUTER_API_KEY`, …) |
+
+```bash
+# API key (interactive)
+anima onboard --cloud openai --auth api_key
+
+# Env var (scripts)
+export OPENAI_API_KEY=sk-...
+anima onboard --yes --cloud openai --auth env --skip-probe
+
+# OpenRouter
+anima onboard --yes --cloud openrouter --auth env --skip-probe
+
+# Custom OpenAI-compatible endpoint
+anima onboard --cloud custom --auth api_key --endpoint https://my.api/v1 --model my-model
+```
+
+Presets: `openai`, `openrouter`, `groq`, `together`, `custom`.
 
 ## Memory
 

@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 ApprovalMode = Literal["always-ask", "policy-limited", "disabled"]
 ProviderKind = Literal["openai_compatible", "llama_cpp", "ollama", "fake"]
+AuthMode = Literal["none", "api_key", "oauth", "env"]
 
 
 class BrainConfig(BaseModel):
@@ -24,6 +25,9 @@ class BrainConfig(BaseModel):
     max_context: int = 8192
     cost_class: str = "local"
     capabilities: list[str] = Field(default_factory=list)
+    auth_mode: AuthMode = "none"
+    secret_id: str = ""
+    env_var: str = ""
 
 
 class BaseChainConfig(BaseModel):
@@ -167,6 +171,9 @@ def _to_toml(cfg: AnimaConfig) -> str:
             f'activation = "{brain.activation}"\n'
             f"max_context = {brain.max_context}\n"
             f'cost_class = "{brain.cost_class}"\n'
+            f'auth_mode = "{brain.auth_mode}"\n'
+            f'secret_id = "{brain.secret_id or brain.id}"\n'
+            f'env_var = "{brain.env_var}"\n'
             f"capabilities = [{caps}]\n"
         )
     base = cfg.base

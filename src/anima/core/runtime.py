@@ -42,7 +42,7 @@ class Runtime:
             self.memory: SibylAdapter | DisabledMemory = DisabledMemory()
         else:
             self.memory = SibylAdapter(cfg.sibyl_db, cfg.tenant_id)
-        self.registry = BrainRegistry(list(cfg.brains), cfg.primary_brain_id)
+        self.registry = BrainRegistry(list(cfg.brains), cfg.primary_brain_id, data_dir=cfg.data_dir)
         self.instinct = InstinctBrain("instinct")
         self.capabilities = CapabilityRegistry()
         if cfg.allow_shell:

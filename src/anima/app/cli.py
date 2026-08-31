@@ -35,6 +35,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--init", action="store_true", help="Write a default config and exit")
     parser.add_argument("--brain", choices=("fake", "ollama", "llama_cpp"), help="Override the primary brain provider")
     parser.add_argument("--model", help="Override the primary brain model id")
+    parser.add_argument("--cloud", choices=("openai", "openrouter", "groq", "together", "custom"), help="Cloud brain preset")
+    parser.add_argument("--auth", choices=("api_key", "oauth", "env"), help="Cloud auth method")
+    parser.add_argument("--api-key", help="API key for cloud brain (prefer env vars in scripts)")
+    parser.add_argument("--oauth-token", help="OAuth access token for cloud brain")
+    parser.add_argument("--endpoint", help="Custom OpenAI-compatible base URL")
     parser.add_argument("--ui", action="store_true", help="Open the graphical web companion")
     parser.add_argument("--yes", "-y", action="store_true", help="Non-interactive defaults for setup/onboard")
     parser.add_argument("--non-interactive", action="store_true", help="Scripted onboard/setup (no prompts)")
@@ -60,6 +65,11 @@ def main(argv: list[str] | None = None) -> int:
             yes=args.yes or args.init,
             brain=args.brain,
             model=args.model,
+            cloud=args.cloud,
+            auth=args.auth,
+            api_key=args.api_key,
+            oauth_token=args.oauth_token,
+            endpoint=args.endpoint,
             skip_probe=args.skip_probe,
             json_output=args.json,
             classic=use_classic,
@@ -75,6 +85,11 @@ def main(argv: list[str] | None = None) -> int:
             yes=args.yes,
             brain=args.brain,
             model=args.model,
+            cloud=args.cloud,
+            auth=args.auth,
+            api_key=args.api_key,
+            oauth_token=args.oauth_token,
+            endpoint=args.endpoint,
             skip_probe=args.skip_probe,
             launch=True,
         )

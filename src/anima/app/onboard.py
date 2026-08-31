@@ -12,8 +12,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
+from anima.cognition.cloud import CLOUD_PRESETS, brain_config_from_cloud, preset_ids
 from anima.cognition.registry import build_brain
 from anima.config.schema import AnimaConfig, BrainConfig, config_exists, default_config, load_config, save_config
+from anima.config.secrets import save_brain_secret, secret_configured
 
 PROBE_PROMPT = "Reply with the single word pong."
 PROBE_SYSTEM = "Be brief. Reply with exactly one word."
@@ -27,6 +29,11 @@ class BrainCandidate:
     endpoint: str
     label: str
     detected: bool = True
+    auth_mode: str = "none"
+    secret_id: str = ""
+    env_var: str = ""
+    cost_class: str = "local"
+    cloud_preset: str = ""
 
 
 def needs_onboarding(data_dir: Path | None = None, config_path: Path | None = None) -> bool:
@@ -68,7 +75,22 @@ def detect_brain_candidates() -> list[BrainCandidate]:
     return candidates
 
 
-def probe_brain(candidate: BrainCandidate, *, skip: bool = False) -> dict[str, Any]:
+def candidate_to_config(candidate: BrainCandidate) -> BrainConfig:
+    return BrainConfig(
+        id=candidate.brain_id,
+        role="primary",
+        provider=candidate.provider,  # type: ignore[arg-type]
+        endpoint=candidate.endpoint,
+        model=candidate.model,
+        capabilities=["conversation"],
+        auth_mode=candidate.auth_mode,  # type: ignore[arg-type]
+        secret_id=candidate.secret_id or candidate.brain_id,
+        env_var=candidate.env_var,
+        cost_class=candidate.cost_class,
+    )
+
+
+def probe_brain(candidate: BrainCandidate, *, data_dir: Path | None = None, skip: bool = False) -> dict[str, Any]:
     if skip or candidate.provider == "fake":
         return {
             "ok": True,
@@ -78,15 +100,19 @@ def probe_brain(candidate: BrainCandidate, *, skip: bool = False) -> dict[str, A
             "text": "pong" if candidate.provider == "fake" else "",
             "skipped": skip,
         }
-    cfg = BrainConfig(
-        id=candidate.brain_id,
-        role="primary",
-        provider=candidate.provider,  # type: ignore[arg-type]
-        endpoint=candidate.endpoint,
-        model=candidate.model,
-        capabilities=["conversation"],
-    )
-    brain = build_brain(cfg)
+    root = data_dir or default_config().data_dir
+    if candidate.auth_mode not in {"none", ""} and not secret_configured(
+        root, candidate.secret_id or candidate.brain_id, candidate.auth_mode, candidate.env_var
+    ):
+        return {
+            "ok": False,
+            "provider": candidate.provider,
+            "model": candidate.model,
+            "error": "credentials missing for cloud brain",
+            "skipped": False,
+        }
+    cfg = candidate_to_config(candidate)
+    brain = build_brain(cfg, root)
     result = brain.complete(PROBE_PROMPT, system=PROBE_SYSTEM, max_tokens=16)
     text = (result.text or "").strip().lower()
     ok = result.ok and bool(text) and "pong" in text
@@ -102,16 +128,7 @@ def probe_brain(candidate: BrainCandidate, *, skip: bool = False) -> dict[str, A
 
 
 def apply_brain_candidate(cfg: AnimaConfig, candidate: BrainCandidate) -> None:
-    cfg.brains = [
-        BrainConfig(
-            id=candidate.brain_id,
-            role="primary",
-            provider=candidate.provider,  # type: ignore[arg-type]
-            endpoint=candidate.endpoint,
-            model=candidate.model,
-            capabilities=["conversation"],
-        )
-    ]
+    cfg.brains = [candidate_to_config(candidate)]
     cfg.primary_brain_id = candidate.brain_id
 
 
@@ -124,6 +141,10 @@ def candidate_from_config(cfg: AnimaConfig) -> BrainCandidate:
         endpoint=primary.endpoint,
         label=f"{primary.provider} · {primary.model or primary.id}",
         detected=False,
+        auth_mode=primary.auth_mode,
+        secret_id=primary.secret_id or primary.id,
+        env_var=primary.env_var,
+        cost_class=primary.cost_class,
     )
 
 
@@ -134,6 +155,11 @@ def run_onboard(
     yes: bool = False,
     brain: str | None = None,
     model: str | None = None,
+    cloud: str | None = None,
+    auth: str | None = None,
+    api_key: str | None = None,
+    oauth_token: str | None = None,
+    endpoint: str | None = None,
     skip_probe: bool = False,
     json_output: bool = False,
     classic: bool = False,
@@ -160,63 +186,118 @@ def run_onboard(
             )
         )
 
-    if configured and existing is not None:
-        current = candidate_from_config(existing)
-        probe = probe_brain(current, skip=skip_probe or current.provider == "fake")
-        if probe["ok"]:
-            summary = _finish_summary(existing, current, probe, repaired=True)
-            if json_output:
-                print(json.dumps(summary, indent=2))
-            elif console is not None:
-                _print_verify_ok(console, current, probe, existing)
-            return _maybe_launch(existing, launch=launch, json_output=json_output)
+    candidate: BrainCandidate | None = None
+    probe: dict[str, Any] = {}
 
-        if auto:
-            candidate, probe = _auto_select(brain, model, skip_probe=skip_probe)
-            if candidate is None:
+    try:
+        if configured and existing is not None:
+            current = candidate_from_config(existing)
+            probe = probe_brain(current, data_dir=cfg.data_dir, skip=skip_probe or current.provider == "fake")
+            if probe["ok"]:
+                summary = _finish_summary(existing, current, probe, repaired=True)
                 if json_output:
-                    print(json.dumps({"ok": False, "error": "no working brain detected"}))
-                return 1
-        elif console is not None:
-            console.print(
-                f"[yellow]Current brain failed probe[/] ({current.label}): {probe.get('error') or probe.get('text')!r}"
-            )
-            if not Confirm.ask("Pick a new brain?", default=True):
-                return 1
-            candidate = _pick_candidate(console, brain, model)
-            if candidate is None:
-                console.print("[dim]Skipped. Run `anima onboard` when you're ready.[/]")
-                return 0
-            probe = probe_brain(candidate, skip=skip_probe)
-            if not probe["ok"] and candidate.provider != "fake":
-                console.print("[red]Probe failed.[/] Try Instinct, start Ollama, or run with --skip-probe.")
-                return 1
-        else:
-            return 1
-        apply_brain_candidate(cfg, candidate)
-    else:
-        if auto:
-            candidate, probe = _auto_select(brain, model, skip_probe=skip_probe)
-            if candidate is None:
-                if json_output:
-                    print(json.dumps({"ok": False, "error": "no working brain detected"}))
-                return 1
-        elif console is not None:
-            candidate = _pick_candidate(console, brain, model)
-            if candidate is None:
-                console.print("[dim]Skipped. Run `anima onboard` when you're ready.[/]")
-                return 0
-            probe = probe_brain(candidate, skip=skip_probe)
-            if not probe["ok"] and candidate.provider != "fake":
-                if Confirm.ask("Probe failed. Use Instinct (offline) instead?", default=True):
-                    candidate = _instinct_candidate()
-                    probe = probe_brain(candidate, skip=True)
-                else:
-                    console.print("[dim]Skipped. Run `anima onboard` again when a model is ready.[/]")
+                    print(json.dumps(summary, indent=2))
+                elif console is not None:
+                    _print_verify_ok(console, current, probe, existing)
+                return _maybe_launch(existing, launch=launch, json_output=json_output)
+
+            if auto:
+                candidate, probe = _auto_select(
+                    brain,
+                    model,
+                    skip_probe=skip_probe,
+                    cloud=cloud,
+                    auth=auth,
+                    api_key=api_key,
+                    oauth_token=oauth_token,
+                    endpoint=endpoint,
+                    data_dir=cfg.data_dir,
+                    console=None,
+                )
+                if candidate is None:
+                    if json_output:
+                        print(json.dumps({"ok": False, "error": "no working brain detected"}))
                     return 1
+            elif console is not None:
+                console.print(
+                    f"[yellow]Current brain failed probe[/] ({current.label}): "
+                    f"{probe.get('error') or probe.get('text')!r}"
+                )
+                if not Confirm.ask("Pick a new brain?", default=True):
+                    return 1
+                candidate = _pick_candidate(
+                    console,
+                    brain,
+                    model,
+                    cfg.data_dir,
+                    cloud=cloud,
+                    auth=auth,
+                    api_key=api_key,
+                    oauth_token=oauth_token,
+                    endpoint=endpoint,
+                    model_override=model,
+                )
+                if candidate is None:
+                    console.print("[dim]Skipped. Run `anima onboard` when you're ready.[/]")
+                    return 0
+                probe = probe_brain(candidate, data_dir=cfg.data_dir, skip=skip_probe)
+                if not probe["ok"] and candidate.provider != "fake":
+                    console.print("[red]Probe failed.[/] Try Instinct, start Ollama, or run with --skip-probe.")
+                    return 1
+            else:
+                return 1
         else:
-            return 1
+            if auto:
+                candidate, probe = _auto_select(
+                    brain,
+                    model,
+                    skip_probe=skip_probe,
+                    cloud=cloud,
+                    auth=auth,
+                    api_key=api_key,
+                    oauth_token=oauth_token,
+                    endpoint=endpoint,
+                    data_dir=cfg.data_dir,
+                    console=None,
+                )
+                if candidate is None:
+                    if json_output:
+                        print(json.dumps({"ok": False, "error": "no working brain detected"}))
+                    return 1
+            elif console is not None:
+                candidate = _pick_candidate(
+                    console,
+                    brain,
+                    model,
+                    cfg.data_dir,
+                    cloud=cloud,
+                    auth=auth,
+                    api_key=api_key,
+                    oauth_token=oauth_token,
+                    endpoint=endpoint,
+                    model_override=model,
+                )
+                if candidate is None:
+                    console.print("[dim]Skipped. Run `anima onboard` when you're ready.[/]")
+                    return 0
+                probe = probe_brain(candidate, data_dir=cfg.data_dir, skip=skip_probe)
+                if not probe["ok"] and candidate.provider != "fake":
+                    if Confirm.ask("Probe failed. Use Instinct (offline) instead?", default=True):
+                        candidate = _instinct_candidate()
+                        probe = probe_brain(candidate, data_dir=cfg.data_dir, skip=True)
+                    else:
+                        console.print("[dim]Skipped. Run `anima onboard` again when a model is ready.[/]")
+                        return 1
+            else:
+                return 1
+
         apply_brain_candidate(cfg, candidate)
+    except ValueError as exc:
+        if json_output:
+            print(json.dumps({"ok": False, "error": str(exc)}))
+        elif console is not None:
+            console.print(f"[red]{exc}[/]")
+        return 1
 
     if not auto and console is not None:
         cfg.base.dry_run = Confirm.ask(
@@ -237,10 +318,35 @@ def _auto_select(
     model: str | None,
     *,
     skip_probe: bool,
+    cloud: str | None = None,
+    auth: str | None = None,
+    api_key: str | None = None,
+    oauth_token: str | None = None,
+    endpoint: str | None = None,
+    data_dir: Path | None = None,
+    console: Console | None = None,
 ) -> tuple[BrainCandidate | None, dict[str, Any]]:
+    root = data_dir or default_config().data_dir
+
+    if cloud:
+        candidate = _build_cloud_candidate(
+            root,
+            cloud,
+            auth=auth or "env",
+            model=model,
+            endpoint=endpoint,
+            api_key=api_key,
+            oauth_token=oauth_token,
+            console=console,
+        )
+        probe = probe_brain(candidate, data_dir=root, skip=skip_probe)
+        if probe["ok"] or skip_probe:
+            return candidate, probe
+        return None, probe
+
     if brain:
         candidate = _candidate_for_provider(brain, model)
-        probe = probe_brain(candidate, skip=skip_probe or candidate.provider == "fake")
+        probe = probe_brain(candidate, data_dir=root, skip=skip_probe or candidate.provider == "fake")
         if probe["ok"] or skip_probe or candidate.provider == "fake":
             return candidate, probe
         return None, probe
@@ -248,23 +354,50 @@ def _auto_select(
     for candidate in detect_brain_candidates():
         if candidate.provider == "fake":
             continue
-        probe = probe_brain(candidate, skip=False)
+        probe = probe_brain(candidate, data_dir=root, skip=False)
         if probe["ok"]:
             return candidate, probe
 
     instinct = _instinct_candidate()
-    return instinct, probe_brain(instinct, skip=True)
+    return instinct, probe_brain(instinct, data_dir=root, skip=True)
 
 
-def _pick_candidate(console: Console, brain: str | None, model: str | None) -> BrainCandidate | None:
+def _pick_candidate(
+    console: Console,
+    brain: str | None,
+    model: str | None,
+    data_dir: Path,
+    *,
+    cloud: str | None = None,
+    auth: str | None = None,
+    api_key: str | None = None,
+    oauth_token: str | None = None,
+    endpoint: str | None = None,
+    model_override: str | None = None,
+) -> BrainCandidate | None:
+    if cloud:
+        return _build_cloud_candidate(
+            data_dir,
+            cloud,
+            auth=auth,
+            model=model_override or model,
+            endpoint=endpoint,
+            api_key=api_key,
+            oauth_token=oauth_token,
+            console=console,
+        )
     if brain:
         return _candidate_for_provider(brain, model)
 
     candidates = detect_brain_candidates()
-    console.print("\n[bold]Detected brains[/]")
+    console.print("\n[bold]Local brains[/]")
     for idx, item in enumerate(candidates, start=1):
         mark = "auto" if item.provider != "fake" else "fallback"
         console.print(f"  {idx}. {item.label}  [dim]({mark})[/]")
+    console.print("\n[bold]Cloud / API[/]")
+    for idx, preset_id in enumerate(preset_ids(), start=len(candidates) + 1):
+        preset = CLOUD_PRESETS[preset_id]
+        console.print(f"  {idx}. {preset.label}  [dim](cloud)[/]")
     console.print("  s. Skip for now")
 
     default = "1" if candidates and candidates[0].provider != "fake" else str(len(candidates))
@@ -273,9 +406,95 @@ def _pick_candidate(console: Console, brain: str | None, model: str | None) -> B
         return None
     try:
         index = int(choice) - 1
-        return candidates[index]
-    except (ValueError, IndexError):
+    except ValueError:
         return candidates[-1]
+    if index < len(candidates):
+        return candidates[index]
+    preset_index = index - len(candidates)
+    preset_id = preset_ids()[preset_index]
+    return _build_cloud_candidate(data_dir, preset_id, console=console)
+
+
+def _build_cloud_candidate(
+    data_dir: Path,
+    preset_id: str,
+    *,
+    auth: str | None = None,
+    model: str | None = None,
+    endpoint: str | None = None,
+    api_key: str | None = None,
+    oauth_token: str | None = None,
+    console: Console | None = None,
+) -> BrainCandidate:
+    preset = CLOUD_PRESETS[preset_id]
+    resolved_auth = auth
+    if console is not None and not resolved_auth:
+        resolved_auth = Prompt.ask(
+            "Auth method",
+            choices=["api_key", "oauth", "env"],
+            default="api_key",
+        )
+    resolved_auth = resolved_auth or "api_key"
+
+    resolved_model = model
+    if console is not None and not resolved_model and preset_id == "custom":
+        resolved_model = Prompt.ask("Model id")
+    elif console is not None and not resolved_model and preset.default_model:
+        resolved_model = Prompt.ask("Model", default=preset.default_model)
+
+    resolved_endpoint = endpoint
+    if console is not None and preset_id == "custom" and not resolved_endpoint:
+        resolved_endpoint = Prompt.ask("Base URL (OpenAI-compatible)", default="https://api.openai.com/v1")
+
+    brain_cfg = brain_config_from_cloud(
+        preset_id,
+        model=resolved_model,
+        endpoint=resolved_endpoint,
+        auth_mode=resolved_auth,  # type: ignore[arg-type]
+    )
+
+    if resolved_auth == "api_key":
+        key = api_key
+        if not key and console is not None:
+            key = Prompt.ask("API key", password=True)
+        if not key:
+            import os
+
+            key = os.environ.get(brain_cfg.env_var)
+        if not key:
+            raise ValueError(f"API key required (flag --api-key or env {brain_cfg.env_var})")
+        save_brain_secret(data_dir, brain_cfg.id, "api_key", api_key=key)
+    elif resolved_auth == "oauth":
+        token = oauth_token
+        if console is not None and preset.oauth_url:
+            console.print(f"\n[dim]Open[/] {preset.oauth_url} [dim]and paste an access token.[/]")
+        if not token and console is not None:
+            token = Prompt.ask("OAuth access token", password=True)
+        if not token:
+            raise ValueError("OAuth token required (--oauth-token)")
+        save_brain_secret(data_dir, brain_cfg.id, "oauth", access_token=token)
+    elif resolved_auth == "env":
+        import os
+
+        if not os.environ.get(brain_cfg.env_var):
+            if console is not None:
+                console.print(f"[yellow]Set[/] {brain_cfg.env_var} [yellow]in your environment before starting Anima.[/]")
+            else:
+                raise ValueError(f"env var {brain_cfg.env_var} is not set")
+
+    return BrainCandidate(
+        provider="openai_compatible",
+        brain_id=brain_cfg.id,
+        model=brain_cfg.model,
+        endpoint=brain_cfg.endpoint,
+        label=f"{preset.label} · {brain_cfg.model}",
+        detected=False,
+        auth_mode=resolved_auth,
+        secret_id=brain_cfg.secret_id or brain_cfg.id,
+        env_var=brain_cfg.env_var,
+        cost_class="cloud",
+        cloud_preset=preset_id,
+    )
 
 
 def _candidate_for_provider(provider: str, model: str | None) -> BrainCandidate:
