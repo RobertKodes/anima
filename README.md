@@ -20,6 +20,8 @@ curl -fsSL https://raw.githubusercontent.com/RobertKodes/anima/master/install/in
 
 That installs Python deps into `~/.anima/.venv`, runs onboarding (detect brain + open the graphical CLI), and adds the CLI to your PATH. More options: [`install/README.md`](install/README.md).
 
+**Presentation website:** [`site/`](site/) — neo-brutalist landing page, deploys to GitHub Pages (`https://robertkodes.github.io/anima/`).
+
 ## Manual install
 
 ```bash

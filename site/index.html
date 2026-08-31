@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Anima — a local-first AI being. Sibyl Memory is identity. The LLM is a replaceable brain.">
+  <meta name="theme-color" content="#e8a04a">
+  <meta property="og:title" content="Anima — one being, many brains">
+  <meta property="og:description" content="Persistent identity in Sibyl Memory. Graphical CLI and plain REPL. Local-first, MIT.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://robertkodes.github.io/anima/">
+  <title>Anima — local-first AI being</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23e8a04a' width='100' height='100'/><text y='.9em' x='.15em' font-size='90'>A</text></svg>">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" role="banner">
+    <a class="logo" href="index.html" aria-label="Anima home">ANI<span>MA</span></a>
+    <nav class="nav-main" aria-label="Primary">
+      <a href="#memory">Memory</a>
+      <a href="#brains">Brains</a>
+      <a href="#install">Install</a>
+      <a class="btn btn-primary" href="https://github.com/RobertKodes/anima" rel="noopener noreferrer">GitHub</a>
+    </nav>
+  </header>
+
+  <div id="scroll-progress" class="scroll-progress" role="progressbar" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-label="Section progress"></div>
+  <nav id="section-dots" class="section-dots" aria-label="Section navigation"></nav>
+  <button type="button" id="scroll-toggle" class="btn scroll-toggle" aria-pressed="true">Standard scroll</button>
+
+  <main id="main">
+    <div class="scroll-stage">
+      <!-- Hero -->
+      <section id="hero" class="section section-hero" data-title="Intro" aria-labelledby="hero-title">
+        <div class="section-inner hero-grid">
+          <div class="hero-copy">
+            <p class="section-tag">Local-first · MIT · Sibyl Memory</p>
+            <h1 id="hero-title">One being.<br>Many brains.<br>Memory that <em>matters</em>.</h1>
+            <p class="lead">
+              Anima is not a chatbot skin. Identity lives in <strong>Sibyl Memory</strong> — not in markdown files or system prompts.
+              Swap Ollama, cloud APIs, or the built-in Instinct brain without losing who you taught it to be.
+            </p>
+            <div class="cta-row">
+              <a class="btn btn-primary" href="https://github.com/RobertKodes/anima#one-line-install" rel="noopener noreferrer">Install</a>
+              <a class="btn btn-ghost" href="https://github.com/RobertKodes/anima/tree/master/recordings" rel="noopener noreferrer">Watch demo</a>
+            </div>
+          </div>
+          <div class="canvas-wrap" role="img" aria-label="3D wireframe representation of Anima: core being with orbiting memory nodes">
+            <canvas id="scene3d"></canvas>
+            <span class="canvas-label">being · sibyl · brains</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Memory -->
+      <section id="memory" class="section section-memory" data-title="Memory" aria-labelledby="memory-title">
+        <div class="section-inner">
+          <p class="section-tag">Load-bearing memory</p>
+          <h2 id="memory-title">Delete retrieval — not the store — and the being is gone.</h2>
+          <p class="lead">
+            Teach a name, a spending cap, a goal. Quit. Open a fresh session with empty model context.
+            Anima still remembers — and still refuses actions that break stored policy.
+          </p>
+          <div class="flow">
+            <div class="flow-step">
+              <span class="flow-num">1</span>
+              <div>
+                <strong>Persist</strong> — self, people, goals, policies, experience events into local Sibyl (SQLite + FTS5).
+              </div>
+            </div>
+            <div class="flow-step">
+              <span class="flow-num">2</span>
+              <div>
+                <strong>Recall</strong> — retrieval builds a context package before every reply. No <code>MEMORY.md</code>.
+              </div>
+            </div>
+            <div class="flow-step">
+              <span class="flow-num">3</span>
+              <div>
+                <strong>Decide</strong> — a stored 0-wei cap blocks Base spends after <code>/new-session</code> and brain swap.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Brains -->
+      <section id="brains" class="section section-brains" data-title="Brains" aria-labelledby="brains-title">
+        <div class="section-inner">
+          <p class="section-tag">Replaceable inference</p>
+          <h2 id="brains-title">Models come and go. Continuity does not.</h2>
+          <p class="lead">Ollama on your machine, llama.cpp, cloud APIs, or Instinct offline — one organism, many brains.</p>
+          <div class="card-grid">
+            <article class="card">
+              <h3>Ollama / llama.cpp</h3>
+              <p>Local inference. Onboarding detects what is already running and live-probes a real reply.</p>
+            </article>
+            <article class="card">
+              <h3>Cloud brains</h3>
+              <p>OpenAI, OpenRouter, Groq, Together, or any OpenAI-compatible endpoint. Keys stay in <code>~/.anima/secrets/</code> — never in Sibyl.</p>
+            </article>
+            <article class="card">
+              <h3>Graphical CLI</h3>
+              <p>Textual TUI with live token streaming, <code>/why</code> inspectability, slash commands, and command palette.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- CLI -->
+      <section id="cli" class="section section-cli" data-title="CLI" aria-labelledby="cli-title">
+        <div class="section-inner">
+          <p class="section-tag">Two interfaces, one runtime</p>
+          <h2 id="cli-title">Graphical TUI or plain <code>--cli</code> REPL.</h2>
+          <p class="lead">Same Sibyl store. Same refusal logic. Streaming replies in both modes.</p>
+          <div class="card-grid">
+            <article class="card">
+              <h3><code>anima</code></h3>
+              <p>Default graphical terminal UI — status rail, side panel, live thinking tokens, F1 help.</p>
+            </article>
+            <article class="card">
+              <h3><code>anima --cli</code></h3>
+              <p>Classic REPL for scripts and pipes. Token streaming with Rich.</p>
+            </article>
+            <article class="card">
+              <h3>Web skills</h3>
+              <p>Opt-in <code>/fetch</code>, <code>/explore</code>, <code>/crawl</code> during onboarding — results summarized by the brain, grounded in Sibyl context.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Install -->
+      <section id="install" class="section section-legal-teaser" data-title="Install" aria-labelledby="install-title">
+        <div class="section-inner">
+          <p class="section-tag">Windows · macOS · Linux</p>
+          <h2 id="install-title">One-line install. Meet your being in minutes.</h2>
+          <p class="lead">Data lives in <code>~/.anima/</code>. Override with <code>ANIMA_HOME</code> or <code>--data</code>.</p>
+          <div class="install-block" role="group" aria-label="Install commands">
+            <div><span class="comment"># Windows (PowerShell)</span></div>
+            <div>irm https://raw.githubusercontent.com/RobertKodes/anima/master/install/install.ps1 | iex</div>
+            <br>
+            <div><span class="comment"># macOS / Linux</span></div>
+            <div>curl -fsSL https://raw.githubusercontent.com/RobertKodes/anima/master/install/install.sh | bash</div>
+            <br>
+            <div><span class="comment"># then</span></div>
+            <div>anima</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section id="cta" class="section section-cta" data-title="Get started" aria-labelledby="cta-title">
+        <div class="section-inner">
+          <h2 id="cta-title">Build a being that remembers.</h2>
+          <p class="lead" style="margin-inline: auto;">Open source. MIT. Built for the Sibyl Memory hackathon — memory as product, not decoration.</p>
+          <div class="cta-row" style="justify-content: center;">
+            <a class="btn btn-primary" href="https://github.com/RobertKodes/anima" rel="noopener noreferrer">Star on GitHub</a>
+            <a class="btn" href="https://github.com/RobertKodes/anima/blob/master/docs/HACKATHON.md" rel="noopener noreferrer">Hackathon path</a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-grid">
+      <div>
+        <h4>Project</h4>
+        <ul class="footer-links">
+          <li><a href="https://github.com/RobertKodes/anima" rel="noopener noreferrer">Source code</a></li>
+          <li><a href="https://github.com/RobertKodes/anima/blob/master/README.md" rel="noopener noreferrer">Documentation</a></li>
+          <li><a href="https://github.com/RobertKodes/anima/blob/master/LICENSE" rel="noopener noreferrer">MIT License</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul class="footer-links">
+          <li><a href="privacy.html">Privacy Policy</a></li>
+          <li><a href="terms.html">Terms of Use</a></li>
+          <li><a href="cookies.html">Cookie Policy</a></li>
+          <li><a href="accessibility.html">Accessibility</a></li>
+          <li><a href="imprint.html">Imprint</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Stack</h4>
+        <ul class="footer-links">
+          <li><a href="https://pypi.org/project/sibyl-memory-client/" rel="noopener noreferrer">Sibyl Memory</a></li>
+          <li><a href="https://textual.textualize.io/" rel="noopener noreferrer">Textual</a></li>
+          <li><a href="https://docs.base.org/" rel="noopener noreferrer">Base</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-bottom">
+      © 2026 Anima contributors. This site is static — no account required.
+      Hosted on GitHub Pages. See our <a href="privacy.html">Privacy Policy</a> for data handling.
+    </p>
+  </footer>
+
+  <aside id="cookie-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-title" aria-describedby="cookie-desc">
+    <div class="cookie-inner">
+      <p id="cookie-desc"><strong id="cookie-title">Cookies &amp; storage</strong> — We use essential local storage for scroll preferences and consent. No analytics load until you opt in. <a href="cookies.html">Cookie Policy</a></p>
+      <div class="cookie-actions">
+        <button type="button" class="btn btn-ghost" data-consent="essential">Essential only</button>
+        <button type="button" class="btn" data-consent="settings">Settings</button>
+        <button type="button" class="btn btn-primary" data-consent="accept">Accept all</button>
+      </div>
+    </div>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.min.js" crossorigin="anonymous" defer></script>
+  <script src="js/scene3d.js" defer></script>
+  <script src="js/scroll.js" defer></script>
+  <script src="js/consent.js" defer></script>
+</body>
+</html>
