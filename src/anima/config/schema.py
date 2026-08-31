@@ -125,6 +125,8 @@ def _merge(cfg: AnimaConfig, raw: dict[str, Any]) -> AnimaConfig:
         data["allow_shell"] = bool(raw["allow_shell"])
     if "amnesia" in raw:
         data["amnesia"] = bool(raw["amnesia"])
+    if "log_path" in raw:
+        data["log_path"] = Path(raw["log_path"]).expanduser()
     brains = raw.get("brains")
     if isinstance(brains, list) and brains:
         data["brains"] = [BrainConfig.model_validate(item).model_dump() for item in brains]
@@ -139,6 +141,10 @@ def _merge(cfg: AnimaConfig, raw: dict[str, Any]) -> AnimaConfig:
     if data.get("log_path"):
         data["log_path"] = Path(data["log_path"])
     return AnimaConfig.model_validate(data)
+
+
+def _toml_path(value: Path | str) -> str:
+    return str(value).replace("\\", "/")
 
 
 def _to_toml(cfg: AnimaConfig) -> str:
@@ -159,8 +165,8 @@ def _to_toml(cfg: AnimaConfig) -> str:
         )
     base = cfg.base
     return (
-        f'data_dir = "{cfg.data_dir}"\n'
-        f'sibyl_db = "{cfg.sibyl_db}"\n'
+        f'data_dir = "{_toml_path(cfg.data_dir)}"\n'
+        f'sibyl_db = "{_toml_path(cfg.sibyl_db)}"\n'
         f'tenant_id = "{cfg.tenant_id}"\n'
         f'primary_brain_id = "{cfg.primary_brain_id}"\n'
         f"allow_shell = {str(cfg.allow_shell).lower()}\n"
@@ -173,7 +179,7 @@ def _to_toml(cfg: AnimaConfig) -> str:
         f"mainnet_enabled = {str(base.mainnet_enabled).lower()}\n"
         f"per_action_limit_wei = {base.per_action_limit_wei}\n"
         f"cumulative_limit_wei = {base.cumulative_limit_wei}\n"
-        f'wallet_path = "{base.wallet_path}"\n'
+        f'wallet_path = "{_toml_path(base.wallet_path)}"\n'
         f"dry_run = {str(base.dry_run).lower()}\n\n"
         + "\n".join(brains)
     )

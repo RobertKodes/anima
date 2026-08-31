@@ -170,7 +170,11 @@ def serve(runtime: Runtime, host: str = "127.0.0.1", port: int = 8787) -> int:
         def do_POST(self) -> None:  # noqa: N802
             length = int(self.headers.get("content-length") or 0)
             raw = self.rfile.read(length)
-            payload = json.loads(raw.decode() or "{}")
+            try:
+                payload = json.loads(raw.decode() or "{}")
+            except json.JSONDecodeError:
+                self._json({"error": "invalid JSON"}, 400)
+                return
             text = str(payload.get("text") or "")
             reply = runtime.handle(text)
             why = runtime.why().text

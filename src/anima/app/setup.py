@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 from typing import Any
@@ -30,10 +31,37 @@ def doctor_report(cfg: AnimaConfig) -> list[dict[str, Any]]:
     rows.append(_ok("llama.cpp", _http_ok("http://127.0.0.1:8080/v1/models") or bool(shutil.which("llama-server")), "llama-server on :8080 or on PATH"))
     rows.append(_ok("ffmpeg", bool(shutil.which("ffmpeg")), shutil.which("ffmpeg") or "not on PATH"))
     rows.append(_ok("instinct brain", True, "always available — tests and first-run work offline"))
+    from anima.base.adapter import base_crypto_available, wallet_creation_available
+
+    crypto_ok, crypto_detail = base_crypto_available()
+    wallet_ok, wallet_detail = wallet_creation_available()
+    rows.append(
+        _ok(
+            "base wallet",
+            wallet_ok,
+            "eth-keys ready (dry-run wallets)" if wallet_ok else f"unavailable ({wallet_detail})",
+        )
+    )
+    rows.append(
+        _ok(
+            "base signing",
+            crypto_ok or cfg.base.dry_run,
+            "eth-account ready (live broadcast)"
+            if crypto_ok
+            else (
+                f"unavailable ({crypto_detail}); dry-run still works"
+                if cfg.base.dry_run
+                else f"unavailable ({crypto_detail})"
+            ),
+        )
+    )
     wallet = Path(cfg.base.wallet_path).expanduser() if cfg.base.wallet_path else None
     if wallet and wallet.is_file():
-        mode = oct(wallet.stat().st_mode & 0o777)
-        rows.append(_ok("wallet file", mode in {"0o600", "0o400"}, f"{wallet} perms {mode}"))
+        if os.name == "nt":
+            rows.append(_ok("wallet file", True, f"{wallet} exists (Windows: Unix perms not enforced)"))
+        else:
+            mode = oct(wallet.stat().st_mode & 0o777)
+            rows.append(_ok("wallet file", mode in {"0o600", "0o400"}, f"{wallet} perms {mode}"))
     else:
         rows.append(_ok("wallet file", True, "not created yet (safe default)"))
     rows.append(_ok("mainnet locked", not cfg.base.mainnet_enabled, "Base Sepolia / dry-run until you opt in"))

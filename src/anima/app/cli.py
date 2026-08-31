@@ -9,13 +9,16 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
 from anima.config.schema import AnimaConfig, BrainConfig, load_config
-from anima.core.runtime import Runtime
+
+if TYPE_CHECKING:
+    from anima.core.runtime import Runtime
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -56,12 +59,15 @@ def main(argv: list[str] | None = None) -> int:
         cfg.brains[0].model = args.model
 
     if args.verb == "doctor":
-        runtime = Runtime(cfg, amnesia=cfg.amnesia)
         from anima.app.commands import cmd_doctor
+        from anima.core.runtime import Runtime
 
+        runtime = Runtime(cfg, amnesia=cfg.amnesia)
         reply = cmd_doctor(runtime, [])
         Console().print(reply.text)
         return 0 if reply.data.get("ok") else 1
+
+    from anima.core.runtime import Runtime
 
     runtime = Runtime(cfg, amnesia=cfg.amnesia)
 
@@ -108,7 +114,7 @@ def _apply_brain_override(cfg: AnimaConfig, provider: str, model: str | None) ->
     cfg.primary_brain_id = brain_id
 
 
-def _run_once(runtime: Runtime, line: str) -> int:
+def _run_once(runtime: "Runtime", line: str) -> int:
     console = Console()
     boot = runtime.boot()
     _print_boot(console, runtime, boot)
@@ -117,7 +123,7 @@ def _run_once(runtime: Runtime, line: str) -> int:
     return 0
 
 
-def _run_plain(runtime: Runtime) -> int:
+def _run_plain(runtime: "Runtime") -> int:
     console = Console()
     boot = runtime.boot()
     _print_boot(console, runtime, boot)
@@ -142,7 +148,7 @@ def _run_plain(runtime: Runtime) -> int:
         _print_reply(console, runtime.handle(line))
 
 
-def _print_boot(console: Console, runtime: Runtime, boot) -> None:
+def _print_boot(console: Console, runtime: "Runtime", boot) -> None:
     data = runtime.status_data()
     mem = data["memory"]
     brain = data.get("primary")

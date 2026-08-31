@@ -162,7 +162,10 @@ def cmd_brain(runtime: Runtime, args: list[str]) -> Reply:
     if verb == "test":
         if len(args) < 2:
             return Reply(text="Usage: /brain test <id>")
-        brain = runtime.registry.get(args[1])
+        brain_id = args[1]
+        if brain_id not in runtime.registry.configs:
+            return Reply(text=f"Unknown brain {brain_id!r}. Try /brains.")
+        brain = runtime.registry.get(brain_id)
         health = brain.health()
         probe = brain.complete("Reply with the single word pong.", system="Be brief.")
         return Reply(
@@ -171,8 +174,11 @@ def cmd_brain(runtime: Runtime, args: list[str]) -> Reply:
     if verb == "use":
         if len(args) < 2:
             return Reply(text="Usage: /brain use <id>")
-        runtime.swap_primary(args[1])
-        return Reply(text=f"Primary brain is now {args[1]}. Identity stays in Sibyl.")
+        brain_id = args[1]
+        if brain_id not in runtime.registry.configs:
+            return Reply(text=f"Unknown brain {brain_id!r}. Try /brains.")
+        runtime.swap_primary(brain_id)
+        return Reply(text=f"Primary brain is now {brain_id}. Identity stays in Sibyl.")
     return Reply(text="Usage: /brain add | /brain test <id> | /brain use <id>")
 
 
@@ -200,7 +206,11 @@ def cmd_base(runtime: Runtime, args: list[str]) -> Reply:
         parsed = _parse_kv(args[1:])
         intent = parsed.get("intent") or "sepolia-note"
         to = parsed.get("to") or runtime.base.address() or "0x0000000000000000000000000000000000000000"
-        value = int(parsed.get("value") or parsed.get("wei") or 0)
+        value_raw = parsed.get("value") or parsed.get("wei") or 0
+        try:
+            value = int(value_raw)
+        except (TypeError, ValueError):
+            return Reply(text=f"Invalid value {value_raw!r}. Use an integer wei amount.")
         confirm = parsed.get("yes") == "true" or "--yes" in args
         return runtime.execute_base(intent, to, value, confirm)
     return Reply(text="Usage: /base status | /base wallet | /base action intent=... to=0x... value=0 --yes")

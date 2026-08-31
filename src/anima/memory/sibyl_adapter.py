@@ -160,3 +160,17 @@ class SibylAdapter:
 
     def get_reference(self, key: str) -> dict[str, Any] | None:
         return self.client.get_reference(key)
+
+    def close(self) -> None:
+        storage = getattr(self.client, "_storage", None)
+        if storage is not None:
+            closer = getattr(storage, "close", None)
+            if callable(closer):
+                closer()
+        self.client = None  # type: ignore[assignment]
+
+    def __enter__(self) -> SibylAdapter:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
