@@ -44,7 +44,7 @@ curl -fsSL https://raw.githubusercontent.com/RobertKodes/anima/master/install/in
 
 | Flag | Shell | Effect |
 |------|-------|--------|
-| `--no-onboard` | bash | Skip `anima onboard --yes` |
+| `--no-onboard` | bash | Skip `anima onboard --yes --launch` |
 | `-NoOnboard` | PowerShell | Same |
 | `--no-path` / `-NoPath` | both | Do not update PATH |
 | `--dry-run` / `-DryRun` | both | Print plan only |

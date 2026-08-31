@@ -143,7 +143,7 @@ Write-AnimaLog "Virtual env: $AnimaVenv"
 if ($DryRun) {
     $drySource = Get-AnimaPipSource
     Write-AnimaLog "[dry-run] would create venv and pip install $drySource"
-    if (-not $NoOnboard) { Write-AnimaLog "[dry-run] would run: python -m anima onboard --yes" }
+    if (-not $NoOnboard) { Write-AnimaLog "[dry-run] would run: python -m anima onboard --yes --launch" }
     exit 0
 }
 
@@ -168,7 +168,7 @@ if ($NoOnboard) {
     Write-AnimaLog "Skipping onboard (-NoOnboard)."
 } else {
     Write-AnimaLog "Running onboard..."
-    Invoke-AnimaCli $scripts @("onboard", "--yes")
+    Invoke-AnimaCli $scripts @("onboard", "--yes", "--launch")
 }
 
 Write-Host @"

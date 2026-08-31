@@ -185,6 +185,8 @@ def run_onboard(
                 border_style="#c45c26",
             )
         )
+        if auto:
+            console.print("[dim]Auto mode — detecting the best available brain…[/]")
 
     candidate: BrainCandidate | None = None
     probe: dict[str, Any] = {}
@@ -212,7 +214,7 @@ def run_onboard(
                     oauth_token=oauth_token,
                     endpoint=endpoint,
                     data_dir=cfg.data_dir,
-                    console=None,
+                    console=console,
                 )
                 if candidate is None:
                     if json_output:
@@ -258,7 +260,7 @@ def run_onboard(
                     oauth_token=oauth_token,
                     endpoint=endpoint,
                     data_dir=cfg.data_dir,
-                    console=None,
+                    console=console,
                 )
                 if candidate is None:
                     if json_output:
@@ -310,6 +312,8 @@ def run_onboard(
         print(json.dumps(summary, indent=2))
     elif console is not None:
         _print_success(console, cfg, candidate, probe, path)
+        if auto and not launch:
+            console.print("\n[bold]Tip:[/] run [bold #e8a04a]anima onboard --launch[/] to open the graphical CLI.")
     return _maybe_launch(cfg, launch=launch, json_output=json_output)
 
 
@@ -354,10 +358,19 @@ def _auto_select(
     for candidate in detect_brain_candidates():
         if candidate.provider == "fake":
             continue
+        if console is not None:
+            console.print(f"[dim]Probing[/] {candidate.label} …")
         probe = probe_brain(candidate, data_dir=root, skip=False)
         if probe["ok"]:
+            if console is not None:
+                console.print(
+                    f"[green]Using[/] {candidate.label} "
+                    f"[dim]({probe.get('latency_ms', 0)} ms · {probe.get('text')!r})[/]"
+                )
             return candidate, probe
 
+    if console is not None:
+        console.print("[yellow]No live brain responded. Falling back to Instinct (offline).[/]")
     instinct = _instinct_candidate()
     return instinct, probe_brain(instinct, data_dir=root, skip=True)
 

@@ -116,7 +116,7 @@ log "Virtual env: $ANIMA_VENV"
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
   log "[dry-run] would create venv and pip install $(anima_pip_source)"
-  [[ "$NO_ONBOARD" -eq 1 ]] || log "[dry-run] would run: anima onboard --yes"
+  [[ "$NO_ONBOARD" -eq 1 ]] || log "[dry-run] would run: anima onboard --yes --launch"
   exit 0
 fi
 
@@ -137,7 +137,7 @@ if [[ "$NO_ONBOARD" -eq 1 ]]; then
   log "Skipping onboard (--no-onboard)."
 else
   log "Running onboard..."
-  anima onboard --yes
+  anima onboard --yes --launch
 fi
 
 cat <<EOF

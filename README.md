@@ -18,7 +18,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -c "irm https://raw.githubusercont
 curl -fsSL https://raw.githubusercontent.com/RobertKodes/anima/master/install/install.sh | bash
 ```
 
-That installs Python deps into `~/.anima/.venv`, runs `anima onboard --yes`, and adds the CLI to your PATH. More options: [`install/README.md`](install/README.md).
+That installs Python deps into `~/.anima/.venv`, runs onboarding (detect brain + open the graphical CLI), and adds the CLI to your PATH. More options: [`install/README.md`](install/README.md).
 
 ## Manual install
 
