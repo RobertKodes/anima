@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Anima — a local-first AI being. Sibyl Memory is identity. The LLM is a replaceable brain.">
-  <meta name="theme-color" content="#e8a04a">
+  <meta name="theme-color" content="#0a0c10">
   <meta property="og:title" content="Anima — one being, many brains">
   <meta property="og:description" content="Persistent identity in Sibyl Memory. Graphical CLI and plain REPL. Local-first, MIT.">
   <meta property="og:type" content="website">
@@ -15,6 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23e8a04a' width='100' height='100'/><text y='.9em' x='.15em' font-size='90'>A</text></svg>">
+  <script src="js/motion-prefs.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -26,34 +27,39 @@
       <a href="#experiences">Experiences</a>
       <a href="#brains">Brains</a>
       <a href="#install">Install</a>
-      <a class="btn btn-primary" href="https://github.com/RobertKodes/anima" rel="noopener noreferrer">GitHub</a>
+      <a class="btn btn-primary" href="https://github.com/RobertKodes/anima" rel="noopener noreferrer" data-magnetic>GitHub</a>
     </nav>
   </header>
 
-  <div id="scroll-progress" class="scroll-progress" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" aria-label="Section progress"></div>
-  <nav id="section-dots" class="section-dots" aria-label="Section navigation"></nav>
-  <button type="button" id="scroll-toggle" class="btn scroll-toggle" aria-pressed="true">Standard scroll</button>
+  <div id="scroll-progress" class="scroll-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Scroll progress"></div>
 
   <main id="main">
     <div class="scroll-stage">
       <!-- Hero -->
       <section id="hero" class="section section-hero" data-title="Intro" aria-labelledby="hero-title">
-        <div class="section-inner hero-grid">
-          <div class="hero-copy">
-            <p class="section-tag">Local-first · MIT · Sibyl Memory</p>
-            <h1 id="hero-title">One being.<br>Many brains.<br>Memory that <em>matters</em>.</h1>
-            <p class="lead">
-              Anima is not a chatbot skin. Identity lives in <strong>Sibyl Memory</strong> — not in markdown files or system prompts.
-              Swap Ollama, cloud APIs, or the built-in Instinct brain without losing who you taught it to be.
-            </p>
-            <div class="cta-row">
-              <a class="btn btn-primary" href="https://github.com/RobertKodes/anima#one-line-install" rel="noopener noreferrer">Install</a>
-              <a class="btn btn-ghost" href="https://github.com/RobertKodes/anima/tree/master/recordings" rel="noopener noreferrer">Watch demo</a>
+        <div class="dot-grid-bg" aria-hidden="true"></div>
+        <div class="section-inner hero-shell">
+          <div class="hero-grid">
+            <div class="hero-copy">
+              <p class="section-tag">Local-first · MIT · Sibyl Memory</p>
+              <h1 id="hero-title" data-kinetic>
+                <span class="kinetic-line"><span class="kinetic-word">One</span> <span class="kinetic-word">being.</span></span>
+                <span class="kinetic-line"><span class="kinetic-word">Many</span> <span class="kinetic-word">brains.</span></span>
+                <span class="kinetic-line"><span class="kinetic-word">Memory</span> <span class="kinetic-word">that</span> <span class="kinetic-word"><em>matters</em>.</span></span>
+              </h1>
+              <p class="lead">
+                Anima is not a chatbot skin. Identity lives in <strong>Sibyl Memory</strong> — not in markdown files or system prompts.
+                Swap Ollama, cloud APIs, or the built-in Instinct brain without losing who you taught it to be.
+              </p>
+              <div class="cta-row">
+                <a class="btn btn-primary" href="https://github.com/RobertKodes/anima#one-line-install" rel="noopener noreferrer" data-magnetic>Install</a>
+                <a class="btn btn-ghost" href="https://github.com/RobertKodes/anima/tree/master/recordings" rel="noopener noreferrer" data-magnetic>Watch demo</a>
+              </div>
             </div>
-          </div>
-          <div class="canvas-wrap" role="img" aria-label="3D wireframe representation of Anima: core being with orbiting memory nodes">
-            <canvas id="scene3d"></canvas>
-            <span class="canvas-label">being · sibyl · brains</span>
+            <div class="canvas-wrap border-beam" role="img" aria-label="3D wireframe representation of Anima: core being with orbiting memory nodes">
+              <canvas id="scene3d"></canvas>
+              <span class="canvas-label">being · sibyl · brains</span>
+            </div>
           </div>
         </div>
       </section>
@@ -67,31 +73,32 @@
             Teach a name, a spending cap, a goal. Quit. Open a fresh session with empty model context.
             Anima still remembers — and still refuses actions that break stored policy.
           </p>
-          <div class="flow">
-            <div class="flow-step">
-              <span class="flow-num">1</span>
-              <div>
-                <strong>Persist</strong> — self, people, goals, policies, experience events into local Sibyl (SQLite + FTS5).
-              </div>
-            </div>
-            <div class="flow-step">
-              <span class="flow-num">2</span>
-              <div>
-                <strong>Recall</strong> — retrieval builds a context package before every reply. No <code>MEMORY.md</code>.
-              </div>
-            </div>
-            <div class="flow-step">
-              <span class="flow-num">3</span>
-              <div>
-                <strong>Decide</strong> — a stored 0-wei cap blocks Base spends after <code>/new-session</code> and brain swap.
-              </div>
-            </div>
-            <div class="flow-step">
-              <span class="flow-num">4</span>
-              <div>
-                <strong>Inspect</strong> — <code>/sibyl status</code>, <code>/memory search</code>, built-in <code>anima-sibyl</code> MCP (search, self, people) — same store as chat.
-              </div>
-            </div>
+          <div class="bento-grid bento-grid--memory" data-bento>
+            <article class="bento-card bento-card--featured border-beam" data-bento-tilt>
+              <div class="bento-glow" aria-hidden="true"></div>
+              <span class="bento-badge">1</span>
+              <h3>Persist</h3>
+              <p>Self, people, goals, policies, experience events into local Sibyl (SQLite + FTS5).</p>
+              <span class="bento-meta">set_entity · write_event</span>
+            </article>
+            <article class="bento-card bento-card--third" data-bento-tilt>
+              <div class="bento-glow" aria-hidden="true"></div>
+              <span class="bento-badge">2</span>
+              <h3>Recall</h3>
+              <p>Retrieval builds a context package before every reply. No <code>MEMORY.md</code>.</p>
+            </article>
+            <article class="bento-card bento-card--third" data-bento-tilt>
+              <div class="bento-glow" aria-hidden="true"></div>
+              <span class="bento-badge">3</span>
+              <h3>Decide</h3>
+              <p>A stored 0-wei cap blocks Base spends after <code>/new-session</code> and brain swap.</p>
+            </article>
+            <article class="bento-card bento-card--third" data-bento-tilt>
+              <div class="bento-glow" aria-hidden="true"></div>
+              <span class="bento-badge">4</span>
+              <h3>Inspect</h3>
+              <p><code>/sibyl status</code>, <code>/memory search</code>, built-in <code>anima-sibyl</code> MCP.</p>
+            </article>
           </div>
           <p class="lead" style="margin-top: 1.5rem;">
             Pro tier: <code>sibyl init</code> → <code>anima sibyl setup</code>. Free tier works locally out of the box.
@@ -108,18 +115,30 @@
           <p class="lead">
             Not markdown skins. Scholar, Guardian, Messenger packs grant web skills, seed the self-model in Sibyl, and wire MCP — with in-process Sibyl memory tools (no subprocess).
           </p>
-          <div class="card-grid">
-            <article class="card">
+          <div class="bento-grid" data-bento>
+            <article class="bento-card bento-card--featured border-beam" data-bento-tilt>
+              <div class="bento-glow" aria-hidden="true"></div>
               <h3>Scholar</h3>
-              <p><code>/fetch</code>, <code>/explore</code>, curious tone. Grounds answers in Sibyl recall across sessions.</p>
+              <p><code>/fetch</code>, <code>/explore</code>, curious tone. Grounds answers in Sibyl recall across sessions — not just the current page.</p>
+              <span class="bento-meta">web · mcp · recall</span>
             </article>
-            <article class="card">
+            <article class="bento-card bento-card--wide" data-bento-tilt>
+              <div class="bento-glow" aria-hidden="true"></div>
               <h3>Guardian</h3>
               <p>Policy-first posture. Spending caps and refusal logic stay in memory, not the prompt.</p>
+              <span class="bento-meta">policy · base · refusal</span>
             </article>
-            <article class="card">
+            <article class="bento-card bento-card--half" data-bento-tilt>
+              <div class="bento-glow" aria-hidden="true"></div>
               <h3>Messenger</h3>
               <p>Telegram and Discord channels — same being, same Sibyl store, different surface.</p>
+              <span class="bento-meta">telegram · discord</span>
+            </article>
+            <article class="bento-card bento-card--half" data-bento-tilt>
+              <div class="bento-glow" aria-hidden="true"></div>
+              <h3>Built-in MCP</h3>
+              <p><code>anima-sibyl</code> exposes search, recent, self, people — same store as chat.</p>
+              <span class="bento-meta">in-process · no subprocess</span>
             </article>
           </div>
           <p class="lead" style="margin-top: 1.5rem;">
@@ -197,10 +216,10 @@
       <section id="cta" class="section section-cta" data-title="Get started" aria-labelledby="cta-title">
         <div class="section-inner">
           <h2 id="cta-title">Build a being that remembers.</h2>
-          <p class="lead" style="margin-inline: auto;">Open source. MIT. Built for the Sibyl Memory hackathon — memory as product, not decoration.</p>
+          <p class="lead">Open source. MIT. Built for the Sibyl Memory hackathon — memory as product, not decoration.</p>
           <div class="cta-row" style="justify-content: center;">
-            <a class="btn btn-primary" href="https://github.com/RobertKodes/anima" rel="noopener noreferrer">Star on GitHub</a>
-            <a class="btn" href="https://github.com/RobertKodes/anima/blob/master/docs/HACKATHON.md" rel="noopener noreferrer">Hackathon path</a>
+            <a class="btn btn-primary" href="https://github.com/RobertKodes/anima" rel="noopener noreferrer" data-magnetic>Star on GitHub</a>
+            <a class="btn btn-ghost" href="https://github.com/RobertKodes/anima/blob/master/docs/HACKATHON.md" rel="noopener noreferrer" data-magnetic>Hackathon path</a>
           </div>
         </div>
       </section>
@@ -255,8 +274,16 @@
   </aside>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.min.js" crossorigin="anonymous" defer></script>
-  <script src="js/scene3d.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js" crossorigin="anonymous" defer></script>
+  <script src="js/gsap-init.js" defer></script>
+  <script src="js/pointer.js" defer></script>
+  <script src="js/kinetic-headlines.js" defer></script>
+  <script src="js/magnetic-buttons.js" defer></script>
+  <script src="js/bento-cards.js" defer></script>
+  <script src="js/scroll-reveal.js" defer></script>
   <script src="js/scroll.js" defer></script>
+  <script src="js/scene3d.js" defer></script>
   <script src="js/consent.js" defer></script>
 </body>
 </html>
