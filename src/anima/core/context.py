@@ -49,6 +49,10 @@ class ContextPackage:
             parts.append("ONCHAIN: " + "; ".join(_brief(o) for o in self.onchain[:4]))
         if self.experiences:
             parts.append("RECENT EXPERIENCE: " + "; ".join(_brief(e) for e in self.experiences[:6]))
+        parts.append(
+            "Answer the user's actual question using only the context above. "
+            "Do not repeat boilerplate about waking up unless they ask who you are."
+        )
         return "\n".join(parts)
 
 

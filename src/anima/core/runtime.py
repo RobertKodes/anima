@@ -121,17 +121,7 @@ class Runtime:
         package, mem_traces = build_context(self.memory, intent, amnesia=self.amnesia)
         decision = route(intent, package, self.registry)
         brain_id = decision.brain_id
-
-        if intent.kind == "ask_memory" and not self.amnesia:
-            reply_text = instinct_decide(user_text, package)
-            latency, used_instinct = 1, True
-        else:
-            reply_text, latency, used_instinct = self._think(user_text, package, brain_id, decision.bounded)
-
-        if intent.kind == "remember_person" and not self.amnesia and package.people == []:
-            # Relationship was just written; instinct/LLM should greet by name even if
-            # retrieval ran before the write. Re-run a name-aware line.
-            reply_text = f"{intent.slots['name']}. You're the first person I remember."
+        reply_text, latency, used_instinct = self._think(user_text, package, brain_id, decision.bounded)
 
         if intent.kind == "base_action" and not self.amnesia:
             action_reply, action_notice = self._maybe_base(user_text, package, confirm=False)
