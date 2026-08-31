@@ -26,7 +26,25 @@ python -m http.server 8080
 
 ## Deploy to GitHub Pages
 
-Push to `master` with changes under `site/` — workflow `.github/workflows/pages.yml` deploys automatically.
+GitHub Pages for this repo serves the **`gh-pages` branch** (not `master/site` directly).
+
+After changing files under `site/`, push to `master` then deploy:
+
+```powershell
+# Windows
+.\scripts\deploy_pages.ps1
+```
+
+```bash
+# macOS / Linux
+./scripts/deploy_pages.sh
+```
+
+Or manually: `git subtree split --prefix=site -b deploy-gh-pages && git push origin deploy-gh-pages:gh-pages --force`
+
+**Live URL:** https://robertkodes.github.io/anima/
+
+The workflow `.github/workflows/pages.yml` runs on push but only works if repo **Settings → Pages → Source** is set to **GitHub Actions**. If you still see an old design, run the deploy script above.
 
 ## Structure
 
