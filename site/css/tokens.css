@@ -1,0 +1,39 @@
+/* Anima — dark-first design tokens */
+
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --bg-base: #0a0c10;
+  --bg-elevated: #12151c;
+  --bg-card: #161a22;
+  --bg-glass: rgba(18, 21, 28, 0.72);
+
+  --text-primary: #f0f2f5;
+  --text-muted: #8b93a7;
+  --text-dim: #5c6370;
+
+  --accent: #e8a04a;
+  --accent-bright: #f0b868;
+  --accent-dim: rgba(232, 160, 74, 0.35);
+  --accent-glow: rgba(232, 160, 74, 0.15);
+  --cyan: #5eb8d4;
+  --cyan-dim: rgba(94, 184, 212, 0.25);
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-accent: rgba(232, 160, 74, 0.4);
+  --grid-line: rgba(255, 255, 255, 0.04);
+  --grid-dot: rgba(255, 255, 255, 0.06);
+
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --header-h: 72px;
+  --section-pad: clamp(48px, 8vw, 96px);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-glow: 0 0 40px var(--accent-glow);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+}

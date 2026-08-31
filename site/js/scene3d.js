@@ -1,5 +1,5 @@
 /**
- * Neo-brutalist 3D hero — Three.js wireframe being (brain + memory metaphor).
+ * Dark-tech 3D hero — Three.js wireframe being (brain + memory metaphor).
  * Respects prefers-reduced-motion: static frame only.
  */
 
@@ -13,18 +13,18 @@
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x140f0a, 1);
+  renderer.setClearColor(0x0a0c10, 1);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
   camera.position.set(0, 0.4, 4.2);
 
-  const ambient = new THREE.AmbientLight(0xf4eadc, 0.55);
+  const ambient = new THREE.AmbientLight(0x8b93a7, 0.4);
   scene.add(ambient);
-  const key = new THREE.DirectionalLight(0xe8a04a, 1.1);
+  const key = new THREE.DirectionalLight(0xe8a04a, 1.4);
   key.position.set(3, 4, 5);
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0x7ec8e3, 0.45);
+  const fill = new THREE.DirectionalLight(0x5eb8d4, 0.55);
   fill.position.set(-4, -1, 2);
   scene.add(fill);
 
@@ -33,16 +33,20 @@
 
   const matCore = new THREE.MeshStandardMaterial({
     color: 0xe8a04a,
-    roughness: 0.35,
-    metalness: 0.15,
+    roughness: 0.25,
+    metalness: 0.35,
     flatShading: true,
+    emissive: 0x3d2a0a,
+    emissiveIntensity: 0.4,
   });
-  const matWire = new THREE.MeshBasicMaterial({ color: 0xf4eadc, wireframe: true });
+  const matWire = new THREE.MeshBasicMaterial({ color: 0xe8a04a, wireframe: true, transparent: true, opacity: 0.35 });
   const matOrb = new THREE.MeshStandardMaterial({
-    color: 0xc45c26,
-    roughness: 0.4,
-    metalness: 0.2,
+    color: 0x5eb8d4,
+    roughness: 0.3,
+    metalness: 0.4,
     flatShading: true,
+    emissive: 0x1a3040,
+    emissiveIntensity: 0.3,
   });
 
   const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.85, 1), matCore);
@@ -62,7 +66,7 @@
 
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(6, 6),
-    new THREE.MeshStandardMaterial({ color: 0x2a2018, roughness: 1, metalness: 0 })
+    new THREE.MeshStandardMaterial({ color: 0x12151c, roughness: 1, metalness: 0 })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -1.35;

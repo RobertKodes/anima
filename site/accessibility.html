@@ -21,18 +21,18 @@
       <li>Semantic HTML landmarks (<code>header</code>, <code>main</code>, <code>nav</code>, <code>footer</code>)</li>
       <li>Skip link to main content</li>
       <li>Visible focus indicators on interactive elements</li>
-      <li>Keyboard navigation for section scroll (Arrow keys, Page Up/Down, Home/End)</li>
-      <li><strong>Standard scroll mode</strong> toggle — disables scrolljacking for users who prefer native scrolling</li>
-      <li><code>prefers-reduced-motion</code> — disables scrolljacking and 3D animation automatically</li>
+      <li>Keyboard navigation for in-page anchor links</li>
+      <li>Native document scroll with optional GSAP scroll reveals</li>
+      <li><code>prefers-reduced-motion</code> — disables GSAP animations, 3D motion, bento tilt, and magnetic buttons automatically</li>
       <li>Alternative text / labels for the 3D canvas</li>
-      <li>Sufficient color contrast on primary text and controls (neo-brutalist palette tested for large text and UI)</li>
+      <li>Sufficient color contrast on primary text and controls (dark theme, amber accent on slate backgrounds)</li>
     </ul>
 
     <h2>Known limitations</h2>
     <ul>
-      <li>Section scroll mode intercepts wheel events; use “Standard scroll” or keyboard if you experience difficulty.</li>
+      <li>Scroll-driven animations may be distracting; enable reduced motion in your OS settings to disable them.</li>
       <li>3D WebGL content may not be perceivable to all users; informational content is duplicated in text.</li>
-      <li>Some decorative neo-brutalist shadows are visual only and not required to understand content.</li>
+      <li>Bento card tilt and magnetic buttons require a pointer device; touch users get static cards.</li>
     </ul>
 
     <h2>Feedback</h2>
