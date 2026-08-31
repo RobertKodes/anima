@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import re
+import time
+from collections.abc import Iterator
 from typing import Any
 
 from anima.base.adapter import BaseAdapter
 from anima.base.policy import ActionRequest
+from anima.cognition.providers.base import stream_brain
 from anima.cognition.providers.fake import InstinctBrain, decide as instinct_decide
 from anima.cognition.registry import BrainRegistry
 from anima.cognition.router import route
 from anima.config.schema import AnimaConfig, BrainConfig
 from anima.core.context import ContextPackage
-from anima.core.events import DecisionTrace, Intent, Reply, TraceItem
+from anima.core.events import DecisionTrace, Intent, Reply, StreamPart, TraceItem
 from anima.core.policies import system_preamble
 from anima.development.metrics import snapshot
 from anima.memory.consolidation import sleep as run_sleep
@@ -173,7 +176,81 @@ class Runtime:
             return dispatch(self, text)
         return self.chat(text)
 
+    def iter_handle(self, raw: str) -> Iterator[StreamPart]:
+        text = raw.rstrip("\n")
+        if text.startswith("/"):
+            from anima.app.commands import dispatch
+
+            yield StreamPart("done", reply=dispatch(self, text))
+            return
+
+        yield StreamPart("status", "remembering…")
+        turn = self._prepare_turn(text)
+        yield StreamPart("status", "thinking…")
+
+        thinking_parts: list[str] = []
+        reply_parts: list[str] = []
+        started = time.perf_counter()
+
+        if turn["reply_mode"] == "stream" and turn.get("stream_prompt"):
+            for chunk in self._stream_prompt(turn["stream_prompt"], turn["package"], turn["brain_id"]):
+                if chunk.kind == "think":
+                    thinking_parts.append(chunk.text)
+                    yield StreamPart("think", chunk.text)
+                else:
+                    reply_parts.append(chunk.text)
+                    yield StreamPart("token", chunk.text)
+            reply_text = "".join(reply_parts).strip()
+            used_instinct = False
+            latency = int((time.perf_counter() - started) * 1000)
+            if not reply_text:
+                reply_text, latency, used_instinct = turn["fallback_fn"]()
+        elif turn["reply_mode"] == "instinct":
+            for part in self._stream_instinct(text, turn["package"]):
+                reply_parts.append(part.text)
+                yield part
+            reply_text = "".join(reply_parts).strip()
+            used_instinct = True
+            latency = int((time.perf_counter() - started) * 1000)
+        else:
+            reply_text, latency, used_instinct = turn["fallback_fn"]()
+            yield StreamPart("token", reply_text)
+
+        if turn.get("post_process"):
+            reply_text = turn["post_process"](reply_text)
+
+        trace = DecisionTrace(
+            intent=turn["intent"].kind,
+            brain_id="instinct" if used_instinct else turn["brain_id"],
+            memories=turn["mem_traces"],
+            tools=[TraceItem("router", turn["brain_id"], turn["decision"].reason), *turn["tool_traces"]],
+            policy="; ".join(turn["notices"]),
+            amnesia=self.amnesia,
+        )
+        if not self.amnesia:
+            record_experience(
+                self.memory,
+                text,
+                reply_text,
+                turn["intent"].kind,
+                trace.brain_id,
+                extra={"route": turn["decision"].reason},
+            )
+            record_brain_outcome(self.memory, trace.brain_id, turn["intent"].kind, True, latency)
+            save_last_trace(self.memory, trace.as_dict())
+        self.session_messages.append(("user", text))
+        self.session_messages.append(("being", reply_text))
+        yield StreamPart("done", reply=Reply(text=reply_text, traces=trace, notices=turn["notices"]))
+
     def chat(self, user_text: str) -> Reply:
+        reply: Reply | None = None
+        for part in self.iter_handle(user_text):
+            if part.kind == "done" and part.reply is not None:
+                reply = part.reply
+        assert reply is not None
+        return reply
+
+    def _prepare_turn(self, user_text: str) -> dict[str, Any]:
         intent = parse_intent(user_text)
         notices: list[str] = []
 
@@ -191,49 +268,90 @@ class Runtime:
         decision = route(intent, package, self.registry)
         brain_id = decision.brain_id
         tool_traces: list[TraceItem] = []
+        stream_prompt: str | None = None
+        reply_mode = "stream"
+        fallback_fn = lambda: self._think(user_text, package, brain_id, decision.bounded)
+        post_process = None
+        brain: object = self.instinct
 
         if intent.kind in {"web_fetch", "web_crawl", "explore"}:
             url = intent.slots.get("url") or extract_url(user_text)
             if not url:
-                return Reply(text="I need a URL. Example: /fetch https://example.com")
-            web_text, tool_traces = self.run_web_skill(intent.kind, url)
-            if web_text.startswith("Skill `"):
-                return Reply(text=web_text, traces=DecisionTrace(intent=intent.kind, brain_id="policy", tools=tool_traces))
-            prompt = (
-                package.as_prompt()
-                + "\n\nWEB SKILL OUTPUT (use this; do not invent beyond it):\n"
-                + web_text
-                + "\n\nUSER:\n"
-                + user_text
-            )
-            reply_text, latency, used_instinct = self._complete_prompt(
-                prompt, package, brain_id, fallback=web_text
-            )
+                reply_mode = "instant"
+                fallback_fn = lambda: ("I need a URL. Example: /fetch https://example.com", 1, True)
+            else:
+                web_text, tool_traces = self.run_web_skill(intent.kind, url)
+                if web_text.startswith("Skill `"):
+                    reply_mode = "instant"
+                    fallback_fn = lambda: (web_text, 1, True)
+                else:
+                    stream_prompt = (
+                        package.as_prompt()
+                        + "\n\nWEB SKILL OUTPUT (use this; do not invent beyond it):\n"
+                        + web_text
+                        + "\n\nUSER:\n"
+                        + user_text
+                    )
+                    fallback_fn = lambda: self._complete_prompt(stream_prompt, package, brain_id, fallback=web_text)
         else:
-            reply_text, latency, used_instinct = self._think(user_text, package, brain_id, decision.bounded)
+            stream_prompt = self._build_prompt(user_text, package, decision.bounded)
+            try:
+                brain = self.registry.get(brain_id)
+            except KeyError:
+                brain = self.instinct
+            if isinstance(brain, InstinctBrain):
+                reply_mode = "instinct"
+                stream_prompt = None
 
         if intent.kind == "base_action" and not self.amnesia:
             action_reply, action_notice = self._maybe_base(user_text, package, confirm=False)
-            if action_reply:
-                reply_text = action_reply
+
+            def _apply_base(text: str) -> str:
+                out = action_reply if action_reply else text
+                return out
+
+            post_process = _apply_base
             if action_notice:
                 notices.append(action_notice)
 
-        trace = DecisionTrace(
-            intent=intent.kind,
-            brain_id="instinct" if used_instinct else brain_id,
-            memories=mem_traces,
-            tools=[TraceItem("router", brain_id, decision.reason), *tool_traces],
-            policy="; ".join(notices),
-            amnesia=self.amnesia,
-        )
-        if not self.amnesia:
-            record_experience(self.memory, user_text, reply_text, intent.kind, trace.brain_id, extra={"route": decision.reason})
-            record_brain_outcome(self.memory, trace.brain_id, intent.kind, True, latency)
-            save_last_trace(self.memory, trace.as_dict())
-        self.session_messages.append(("user", user_text))
-        self.session_messages.append(("being", reply_text))
-        return Reply(text=reply_text, traces=trace, notices=notices)
+        return {
+            "intent": intent,
+            "notices": notices,
+            "mem_traces": mem_traces,
+            "brain_id": brain_id,
+            "decision": decision,
+            "tool_traces": tool_traces,
+            "stream_prompt": stream_prompt,
+            "fallback_fn": fallback_fn,
+            "post_process": post_process,
+            "package": package,
+            "reply_mode": reply_mode,
+        }
+
+    def _build_prompt(self, user_text: str, package: ContextPackage, bounded: bool) -> str:
+        context = package.as_prompt()
+        if bounded:
+            bounded_pkg = ContextPackage(
+                amnesia=package.amnesia,
+                strategies=package.strategies,
+                knowledge=package.knowledge,
+                query=package.query,
+            )
+            context = bounded_pkg.as_prompt() + "\n(Bounded specialist context: identity withheld.)"
+        return context + "\n\nUSER:\n" + user_text
+
+    def _stream_prompt(self, prompt: str, package: ContextPackage, brain_id: str):
+        system = system_preamble(package.amnesia)
+        try:
+            brain = self.registry.get(brain_id)
+        except KeyError:
+            brain = self.instinct
+        yield from stream_brain(brain, prompt, system=system)
+
+    def _stream_instinct(self, user_text: str, package: ContextPackage) -> Iterator[StreamPart]:
+        text = instinct_decide(user_text, package)
+        for word in text.split():
+            yield StreamPart("token", word + " ")
 
     def new_session(self) -> None:
         self.session_messages.clear()
@@ -331,17 +449,7 @@ class Runtime:
 
     def _think(self, user_text: str, package: ContextPackage, brain_id: str, bounded: bool) -> tuple[str, int, bool]:
         system = system_preamble(package.amnesia)
-        context = package.as_prompt()
-        if bounded:
-            # Specialists do not receive the full self-model by default.
-            bounded_pkg = ContextPackage(
-                amnesia=package.amnesia,
-                strategies=package.strategies,
-                knowledge=package.knowledge,
-                query=package.query,
-            )
-            context = bounded_pkg.as_prompt() + "\n(Bounded specialist context: identity withheld.)"
-        prompt = context + "\n\nUSER:\n" + user_text
+        prompt = self._build_prompt(user_text, package, bounded)
 
         try:
             brain = self.registry.get(brain_id)
@@ -352,7 +460,6 @@ class Runtime:
         result = brain.complete(prompt, system=system)
         if result.ok and result.text.strip():
             return result.text.strip(), result.latency_ms, False
-        # Honest fallback. Uses the package, so memory still changes behavior.
         return instinct_decide(user_text, package), result.latency_ms or 1, True
 
     def _maybe_base(self, user_text: str, package: ContextPackage, confirm: bool) -> tuple[str | None, str | None]:

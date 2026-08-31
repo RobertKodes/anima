@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Iterator
 from pathlib import Path
 
 import httpx
 
-from anima.cognition.providers.base import Completion
+from anima.cognition.providers.base import Completion, StreamChunk
+from anima.cognition.providers.stream_http import iter_sse_token_deltas
 
 
 class OpenAICompatibleBrain:
@@ -60,6 +62,32 @@ class OpenAICompatibleBrain:
         except Exception as exc:
             ms = int((time.perf_counter() - started) * 1000)
             return Completion(text="", brain_id=self.id, latency_ms=ms, ok=False, error=str(exc))
+
+    def stream_complete(
+        self, prompt: str, *, system: str = "", max_tokens: int = 400
+    ) -> Iterator[StreamChunk]:
+        url = self.endpoint + "/chat/completions"
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": 0.4,
+            "stream": True,
+        }
+        payload.update(self.extra)
+        try:
+            with httpx.Client(timeout=self.timeout, headers=self.headers) as client:
+                with client.stream("POST", url, json=payload) as response:
+                    response.raise_for_status()
+                    yield from iter_sse_token_deltas(response)
+        except Exception:
+            result = self.complete(prompt, system=system, max_tokens=max_tokens)
+            if result.text:
+                yield StreamChunk("token", result.text)
 
     def health(self) -> dict:
         try:

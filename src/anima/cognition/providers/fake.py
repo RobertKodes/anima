@@ -8,7 +8,9 @@ different action.
 
 from __future__ import annotations
 
-from anima.cognition.providers.base import Completion
+from collections.abc import Iterator
+
+from anima.cognition.providers.base import Completion, StreamChunk
 from anima.core.context import ContextPackage
 
 
@@ -23,6 +25,13 @@ class InstinctBrain:
     def complete(self, prompt: str, *, system: str = "", max_tokens: int = 400) -> Completion:
         text = self.reply_from_prompt(prompt)
         return Completion(text=text, brain_id=self.id, latency_ms=1, ok=True)
+
+    def stream_complete(
+        self, prompt: str, *, system: str = "", max_tokens: int = 400
+    ) -> Iterator[StreamChunk]:
+        text = self.reply_from_prompt(prompt)
+        for word in text.split():
+            yield StreamChunk("token", word + " ")
 
     def reply(self, user_text: str, package: ContextPackage) -> str:
         return decide(user_text, package)

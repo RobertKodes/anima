@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from time import monotonic
 
+from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.command import Hit, Hits, Provider
@@ -14,7 +15,7 @@ from textual.widgets import Footer, Input as TextInput, RichLog, Static
 
 from anima.app.commands import HELP, SLASH_PREFIXES
 from anima.app.theme import BANNER, TUI_CSS
-from anima.core.events import Reply
+from anima.core.events import Reply, StreamPart
 from anima.core.runtime import Runtime
 from anima.development.metrics import snapshot
 
@@ -73,6 +74,8 @@ class AnimaApp(App):
         self.runtime = runtime
         self._started = monotonic()
         self._busy = "ready"
+        self._stream_think = ""
+        self._stream_reply = ""
 
     def compose(self) -> ComposeResult:
         with Vertical(id="shell"):
@@ -81,6 +84,7 @@ class AnimaApp(App):
                 yield Static(id="side")
                 with Vertical(id="chat-wrap"):
                     yield RichLog(id="chat", highlight=True, markup=True, wrap=True)
+                    yield Static(id="stream")
                     yield Static(id="hints")
                     yield TextInput(
                         placeholder="Talk, or type /  —  tab completes  ·  ctrl+p palette",
@@ -110,7 +114,7 @@ class AnimaApp(App):
             "Birth is not a recalled life.\nThere is nothing to explain yet.\n\nTalk, then /why names the memories that mattered."
         )
         self.query_one("#composer", TextInput).focus()
-        self.set_interval(1.0, self._tick)
+        self.set_interval(0.2, self._tick)
 
     def on_input_changed(self, event: TextInput.Changed) -> None:
         if event.input.id != "composer":
@@ -126,17 +130,82 @@ class AnimaApp(App):
         self.submit_line(text)
 
     def submit_line(self, text: str) -> None:
+        if self._busy != "ready":
+            log = self.query_one("#chat", RichLog)
+            log.write("[#8a7a68]…[/]  still composing the last reply")
+            return
         log = self.query_one("#chat", RichLog)
         log.write(f"[#e8a04a]you[/]    {text}")
-        self._busy = "thinking"
+        self._stream_think = ""
+        self._stream_reply = ""
+        self._set_stream_visible(True)
+        self._update_stream_panel()
+        self._set_busy("remembering…")
+        self._stream_reply_worker(text)
+
+    @work(thread=True, exclusive=True)
+    def _stream_reply_worker(self, text: str) -> None:
+        final: Reply | None = None
+        try:
+            for part in self.runtime.iter_handle(text):
+                self.call_from_thread(self._apply_stream_part, part)
+                if part.kind == "done":
+                    final = part.reply
+        finally:
+            self.call_from_thread(self._finish_stream, final)
+
+    def _apply_stream_part(self, part: StreamPart) -> None:
+        if part.kind == "status":
+            self._set_busy(part.text)
+            return
+        if part.kind == "think":
+            self._stream_think += part.text
+            self._set_busy("thinking…")
+        elif part.kind == "token":
+            self._stream_reply += part.text
+            self._set_busy("writing…")
+        self._update_stream_panel()
+
+    def _finish_stream(self, reply: Reply | None) -> None:
+        self._set_stream_visible(False)
+        if reply is not None:
+            self._write_being(reply)
+            self._refresh_chrome()
+            self._refresh_why(reply)
+            if reply.data.get("quit"):
+                self.exit()
+                return
+        self._set_busy("ready")
+        self.query_one("#composer", TextInput).focus()
+
+    def _set_stream_visible(self, visible: bool) -> None:
+        stream = self.query_one("#stream", Static)
+        composer = self.query_one("#composer", TextInput)
+        if visible:
+            stream.add_class("active")
+            composer.add_class("busy")
+        else:
+            stream.remove_class("active")
+            composer.remove_class("busy")
+            stream.update("")
+
+    def _update_stream_panel(self) -> None:
+        stream = self.query_one("#stream", Static)
+        parts: list[str] = []
+        if self._stream_think.strip():
+            think = self._stream_think.strip()
+            if len(think) > 900:
+                think = "…" + think[-900:]
+            parts.append(f"[#8a7a68 italic]thinking[/]  {think}")
+        if self._stream_reply:
+            parts.append(f"[#f4eadc]anima[/]  {self._stream_reply}[#8a7a68]▌[/]")
+        elif not self._stream_think:
+            parts.append("[#8a7a68]anima[/]  …")
+        stream.update("\n".join(parts))
+
+    def _set_busy(self, state: str) -> None:
+        self._busy = state
         self._refresh_status()
-        reply = self.runtime.handle(text)
-        self._busy = "ready"
-        self._write_being(reply)
-        self._refresh_chrome()
-        self._refresh_why(reply)
-        if reply.data.get("quit"):
-            self.exit()
 
     def action_new_session(self) -> None:
         self.submit_line("/new-session")
@@ -161,7 +230,12 @@ class AnimaApp(App):
             log.write(f"[#f4eadc]anima[/]  {line}")
 
     def _tick(self) -> None:
-        self._refresh_status()
+        if not self.is_running:
+            return
+        try:
+            self._refresh_status()
+        except Exception:
+            return
 
     def _elapsed(self) -> str:
         seconds = int(monotonic() - self._started)
@@ -212,9 +286,14 @@ class AnimaApp(App):
         self._refresh_status()
 
     def _refresh_status(self) -> None:
+        if not self.is_running:
+            return
         data = self.runtime.status_data()
         mem = "sibyl" if data["memory"].get("ok") else "no-sibyl"
-        bar = self.query_one("#statusbar", Static)
+        try:
+            bar = self.query_one("#statusbar", Static)
+        except Exception:
+            return
         bar.update(
             f" {self._busy}  ·  {data['primary']}  ·  {data['stage']}  ·  {data['age_turns']} turns  ·  {self._elapsed()}  ·  {mem}  ·  Base {data['base'].get('network')}"
         )

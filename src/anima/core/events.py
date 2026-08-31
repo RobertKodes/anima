@@ -75,3 +75,12 @@ class Reply:
     traces: DecisionTrace | None = None
     notices: list[str] = field(default_factory=list)
     data: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class StreamPart:
+    """Incremental event while the being composes a reply."""
+
+    kind: Literal["status", "think", "token", "done"]
+    text: str = ""
+    reply: Reply | None = None

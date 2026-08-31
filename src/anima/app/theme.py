@@ -71,11 +71,26 @@ Screen {
     padding: 0 1;
 }
 
-#composer {
-    dock: bottom;
-    height: 3;
-    background: #1e1610;
-    border: tall #e8a04a;
+#stream {
+    height: auto;
+    max-height: 10;
+    padding: 0 1;
+    background: #18120d;
+    border-top: tall #3a2c20;
+    display: none;
+}
+
+#stream.active {
+    display: block;
+}
+
+#stream .think {
+    color: #8a7a68;
+    text-style: italic;
+}
+
+#composer.busy {
+    border: tall #c45c26;
 }
 
 Input {
