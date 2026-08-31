@@ -181,8 +181,7 @@ def _run_once(runtime: "Runtime", line: str) -> int:
     console = Console()
     boot = runtime.boot()
     _print_boot(console, runtime, boot)
-    reply = runtime.handle(line)
-    _print_reply(console, reply)
+    _stream_handle(console, runtime, line)
     return 0
 
 
@@ -195,9 +194,9 @@ def _run_plain(runtime: "Runtime") -> int:
         for line in sys.stdin:
             if not line.strip():
                 continue
-            _print_reply(console, runtime.handle(line.rstrip("\n")))
+            _stream_handle(console, runtime, line.rstrip("\n"))
         return 0
-    console.print("[dim]Type /help · tab is TUI-only · leave with Ctrl-D[/]")
+    console.print("[dim]Type /help · live tokens below · anima (no --cli) for graphical TUI · Ctrl-D to leave[/]")
     while True:
         try:
             line = console.input("[bold #e8a04a]you[/] ")
@@ -208,7 +207,41 @@ def _run_plain(runtime: "Runtime") -> int:
             continue
         if line.strip() in {":q", "/quit", "/exit"}:
             return 0
-        _print_reply(console, runtime.handle(line))
+        _stream_handle(console, runtime, line)
+
+
+def _stream_handle(console: Console, runtime: "Runtime", line: str) -> None:
+    """Print reply tokens as they arrive; show thinking when the brain exposes it."""
+    reply = None
+    wrote_think_header = False
+    wrote_anima_prefix = False
+    for part in runtime.iter_handle(line):
+        if part.kind == "status" and sys.stdout.isatty():
+            console.print(f"[dim]{part.text}[/]", end="\r")
+        elif part.kind == "think":
+            if not wrote_think_header:
+                console.print("[dim italic]thinking[/]")
+                wrote_think_header = True
+            console.print(part.text, end="", style="dim italic")
+        elif part.kind == "token":
+            if wrote_think_header and not wrote_anima_prefix:
+                console.print()
+            if not wrote_anima_prefix:
+                console.print("[bold]anima[/] ", end="")
+                wrote_anima_prefix = True
+            console.print(part.text, end="", highlight=False)
+            console.file.flush()
+        elif part.kind == "done" and part.reply is not None:
+            reply = part.reply
+    if wrote_anima_prefix:
+        console.print()
+    elif reply is not None:
+        _print_reply(console, reply)
+        return
+    if reply is None:
+        return
+    for notice in reply.notices:
+        console.print(f"[green]\\[{notice}][/]")
 
 
 def _print_boot(console: Console, runtime: "Runtime", boot) -> None:
