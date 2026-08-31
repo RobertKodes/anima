@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accessibility Statement — Anima</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header"><a class="logo" href="index.html">ANI<span>MA</span></a></header>
+  <main id="main" class="legal-page">
+    <h1>Accessibility Statement</h1>
+    <p class="updated">Last updated: 31 August 2026 · WCAG 2.1 Level AA target</p>
+
+    <p>We want this presentation site to be usable by as many people as possible, in line with the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA and applicable laws (e.g. EU Web Accessibility Directive, ADA Title III where relevant to public accommodations online).</p>
+
+    <h2>Measures taken</h2>
+    <ul>
+      <li>Semantic HTML landmarks (<code>header</code>, <code>main</code>, <code>nav</code>, <code>footer</code>)</li>
+      <li>Skip link to main content</li>
+      <li>Visible focus indicators on interactive elements</li>
+      <li>Keyboard navigation for section scroll (Arrow keys, Page Up/Down, Home/End)</li>
+      <li><strong>Standard scroll mode</strong> toggle — disables scrolljacking for users who prefer native scrolling</li>
+      <li><code>prefers-reduced-motion</code> — disables scrolljacking and 3D animation automatically</li>
+      <li>Alternative text / labels for the 3D canvas</li>
+      <li>Sufficient color contrast on primary text and controls (neo-brutalist palette tested for large text and UI)</li>
+    </ul>
+
+    <h2>Known limitations</h2>
+    <ul>
+      <li>Section scroll mode intercepts wheel events; use “Standard scroll” or keyboard if you experience difficulty.</li>
+      <li>3D WebGL content may not be perceivable to all users; informational content is duplicated in text.</li>
+      <li>Some decorative neo-brutalist shadows are visual only and not required to understand content.</li>
+    </ul>
+
+    <h2>Feedback</h2>
+    <p>If you encounter barriers, please open an issue at <a href="https://github.com/RobertKodes/anima/issues" rel="noopener noreferrer">github.com/RobertKodes/anima/issues</a> with “a11y” in the title. We aim to respond within 14 days.</p>
+
+    <h2>Enforcement procedure (EU)</h2>
+    <p>In Romania, the relevant enforcement body for accessibility of websites can be contacted through national consumer and digital authorities. You may also contact us first so we can resolve issues promptly.</p>
+  </main>
+  <footer class="site-footer"><p class="footer-bottom"><a href="index.html">Home</a> · <a href="privacy.html">Privacy</a></p></footer>
+  <script src="js/consent.js" defer></script>
+</body>
+</html>
