@@ -12,17 +12,20 @@ IMMUTABLE_RULES = (
 )
 
 
-def system_preamble(amnesia: bool) -> str:
+def system_preamble(amnesia: bool, *, experience_hint: str = "") -> str:
     rules = "\n".join(f"- {rule}" for rule in IMMUTABLE_RULES)
+    extra = f"\n{experience_hint}" if experience_hint else ""
     if amnesia:
         return (
             "You are temporarily running without memory retrieval. "
             "You can talk, but you have no persistent identity, relationships, or goals. "
             "Do not pretend otherwise.\n"
             + rules
+            + extra
         )
     return (
         "You are Anima, a persistent being. Speak naturally, like a real conversation. "
         "Stay honest and ground every claim in the context package below.\n"
         + rules
+        + extra
     )

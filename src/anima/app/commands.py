@@ -56,6 +56,8 @@ def cmd_status(runtime: Runtime, _args: list[str]) -> Reply:
         f"Primary brain    {data['primary']}",
         f"Base             {data['base'].get('network')}  dry_run={data['base'].get('dry_run')}  mode={data['base'].get('approval_mode')}",
         f"Amnesia          {data['amnesia']}",
+        f"Experience       {runtime.cfg.active_experience_id or '(none)'}",
+        f"MCP servers      {len(runtime.cfg.mcp_servers)}",
     ]
     return Reply(text="\n".join(lines), data=data)
 
@@ -209,16 +211,87 @@ def cmd_capabilities(runtime: Runtime, args: list[str]) -> Reply:
     return Reply(text="\n".join(lines), data={"capabilities": runtime.capabilities.as_dicts()})
 
 
-def cmd_skills(_runtime: Runtime, _args: list[str]) -> Reply:
-    from anima.skills.catalog import SKILLS
+def cmd_skills(runtime: Runtime, _args: list[str]) -> Reply:
+    from anima.skills.catalog import SKILLS, granted_skills
 
     lines = ["Skills Anima can learn:"]
     for skill in SKILLS:
-        lines.append(f"- {skill.title} ({skill.capability})")
+        mark = "on" if skill in granted_skills(runtime.cfg) else "off"
+        lines.append(f"- [{mark}] {skill.title} ({skill.capability})")
         lines.append(f"  {skill.summary}")
         lines.append(f"  Command: {skill.slash}")
-    lines.append("\nEnable during onboarding or: /capabilities grant web_fetch")
+    lines.append("\nBundles: /experiences list — marketplace combos of skills + MCP + personality.")
+    lines.append("Enable during onboarding or: /capabilities grant web_fetch")
     return Reply(text="\n".join(lines))
+
+
+def cmd_experiences(runtime: Runtime, args: list[str]) -> Reply:
+    from anima.experiences.marketplace import apply_experience, format_marketplace, load_experience
+    from anima.mcp.registry import McpRegistry
+
+    if not args or args[0] == "list":
+        return Reply(text=format_marketplace(runtime.cfg))
+    if args[0] == "show" and len(args) > 1:
+        pack = load_experience(runtime.cfg, args[1])
+        if pack is None:
+            return Reply(text=f"Unknown experience {args[1]!r}. Try /experiences list")
+        m = pack.manifest
+        lines = [
+            f"{m.title} ({m.id}) v{m.version}",
+            m.summary,
+            f"Active: {runtime.cfg.active_experience_id == m.id}",
+            f"Tags: {', '.join(m.tags)}",
+            f"Skills: {', '.join(s.capability for s in m.skills) or '—'}",
+            f"MCP: {', '.join(x.id for x in m.mcp) or '—'}",
+            f"Channels: {', '.join(c.kind for c in m.channels) or '—'}",
+        ]
+        if m.unique:
+            lines.append(f"Unique: {m.unique}")
+        return Reply(text="\n".join(lines))
+    if args[0] == "apply" and len(args) > 1:
+        try:
+            pack = apply_experience(runtime.cfg, runtime.memory, args[1])
+            runtime._apply_capability_grants()
+            runtime.mcp = McpRegistry(runtime.cfg)
+            return Reply(
+                text=f"Applied experience {pack.manifest.title}. Sibyl updated. Skills and MCP configured.",
+                notices=[f"experience:{pack.id}"],
+            )
+        except FileNotFoundError:
+            return Reply(text=f"Experience {args[1]!r} not found. Try /experiences list")
+    return Reply(text="Usage: /experiences list | /experiences show <id> | /experiences apply <id>")
+
+
+def cmd_mcp(runtime: Runtime, args: list[str]) -> Reply:
+    if not args or args[0] == "list":
+        return Reply(text=runtime.mcp.format_status())
+    if args[0] == "tools" and len(args) > 1:
+        try:
+            tools = runtime.mcp.discover_tools(args[1])
+        except KeyError:
+            return Reply(text=f"Unknown MCP server {args[1]!r}")
+        if not tools:
+            return Reply(text="No tools discovered (server down or pip install 'anima[mcp]' missing).")
+        lines = [f"Tools on {args[1]}:"]
+        for tool in tools:
+            lines.append(f"  • {tool.name}  {tool.description[:80]}")
+        return Reply(text="\n".join(lines))
+    if args[0] == "call" and len(args) >= 3:
+        import json
+
+        server_id, tool_name = args[1], args[2]
+        payload: dict = {}
+        if len(args) > 3:
+            try:
+                payload = json.loads(" ".join(args[3:]))
+            except json.JSONDecodeError:
+                return Reply(text='Usage: /mcp call <server> <tool> {"key": "value"}')
+        try:
+            result = runtime.mcp.call(server_id, tool_name, payload)
+        except KeyError:
+            return Reply(text=f"Unknown MCP server {server_id!r}")
+        return Reply(text=result[:4000])
+    return Reply(text="Usage: /mcp list | /mcp tools <server> | /mcp call <server> <tool> [json]")
 
 
 def cmd_fetch(runtime: Runtime, args: list[str]) -> Reply:
@@ -343,6 +416,9 @@ HELP = [
     ("/capabilities", "Tools and permissions."),
     ("/capabilities grant <id>", "Enable web_fetch, web_crawl, explore, shell."),
     ("/skills", "Skills Anima can learn (web, explore)."),
+    ("/experiences list", "Experiences Marketplace — skill + MCP combos."),
+    ("/experiences apply <id>", "Apply an experience pack to config + Sibyl."),
+    ("/mcp list", "MCP servers and tools."),
     ("/fetch <url>", "Fetch and read a public page."),
     ("/crawl <url>", "Crawl same-site links."),
     ("/explore <url>", "Summarize a page and list links."),
@@ -370,6 +446,8 @@ COMMANDS: dict[str, Handler] = {
     "/brain": cmd_brain,
     "/capabilities": cmd_capabilities,
     "/skills": cmd_skills,
+    "/experiences": cmd_experiences,
+    "/mcp": cmd_mcp,
     "/fetch": cmd_fetch,
     "/crawl": cmd_crawl,
     "/explore": cmd_explore,
@@ -398,6 +476,10 @@ SLASH_PREFIXES = [
     "/capabilities",
     "/capabilities grant ",
     "/skills",
+    "/experiences list",
+    "/experiences apply ",
+    "/mcp list",
+    "/mcp tools ",
     "/fetch ",
     "/crawl ",
     "/explore ",

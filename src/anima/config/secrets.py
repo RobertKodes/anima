@@ -69,6 +69,33 @@ def secret_configured(data_dir: Path, brain_id: str, auth_mode: AuthMode, env_va
     return load_brain_secret(data_dir, brain_id) is not None
 
 
+def channel_secret_path(data_dir: Path, kind: str) -> Path:
+    return data_dir / "secrets" / "channels" / f"{kind}.json"
+
+
+def save_channel_token(data_dir: Path, kind: str, token: str) -> Path:
+    path = channel_secret_path(data_dir, kind)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"token": token}), encoding="utf-8")
+    _secure_file(path)
+    return path
+
+
+def resolve_channel_token(cfg, kind: str) -> str | None:
+    env_map = {"telegram": "TELEGRAM_BOT_TOKEN", "discord": "DISCORD_BOT_TOKEN"}
+    env_key = env_map.get(kind)
+    if env_key and os.environ.get(env_key):
+        return os.environ.get(env_key)
+    path = channel_secret_path(cfg.data_dir, kind)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    return data.get("token") if isinstance(data, dict) else None
+
+
 def _secure_file(path: Path) -> None:
     try:
         os.chmod(path, 0o600)

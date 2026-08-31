@@ -43,6 +43,23 @@ class BaseChainConfig(BaseModel):
     dry_run: bool = True
 
 
+class McpServerConfig(BaseModel):
+    id: str
+    title: str = ""
+    transport: Literal["stdio"] = "stdio"
+    command: str = ""
+    args: list[str] = Field(default_factory=list)
+    env: dict[str, str] = Field(default_factory=dict)
+    enabled: bool = True
+    optional: bool = True
+
+
+class ChannelConfig(BaseModel):
+    kind: Literal["telegram", "discord", "web"]
+    enabled: bool = False
+    note: str = ""
+
+
 class AnimaConfig(BaseModel):
     data_dir: Path
     sibyl_db: Path
@@ -54,6 +71,9 @@ class AnimaConfig(BaseModel):
     allow_web_fetch: bool = False
     allow_web_crawl: bool = False
     allow_explore: bool = False
+    active_experience_id: str = ""
+    mcp_servers: list[McpServerConfig] = Field(default_factory=list)
+    channels: list[ChannelConfig] = Field(default_factory=list)
     log_path: Path | None = None
     amnesia: bool = False
 
@@ -142,6 +162,8 @@ def _merge(cfg: AnimaConfig, raw: dict[str, Any]) -> AnimaConfig:
         data["allow_web_crawl"] = bool(raw["allow_web_crawl"])
     if "allow_explore" in raw:
         data["allow_explore"] = bool(raw["allow_explore"])
+    if "active_experience_id" in raw:
+        data["active_experience_id"] = str(raw["active_experience_id"])
     if "amnesia" in raw:
         data["amnesia"] = bool(raw["amnesia"])
     if "log_path" in raw:
@@ -153,6 +175,12 @@ def _merge(cfg: AnimaConfig, raw: dict[str, Any]) -> AnimaConfig:
     if isinstance(base, dict):
         merged_base = {**data["base"], **base}
         data["base"] = merged_base
+    mcp = raw.get("mcp_servers")
+    if isinstance(mcp, list):
+        data["mcp_servers"] = [McpServerConfig.model_validate(item).model_dump() for item in mcp]
+    channels = raw.get("channels")
+    if isinstance(channels, list):
+        data["channels"] = [ChannelConfig.model_validate(item).model_dump() for item in channels]
     if data.get("data_dir"):
         data["data_dir"] = Path(data["data_dir"])
     if data.get("sibyl_db"):
@@ -186,6 +214,27 @@ def _to_toml(cfg: AnimaConfig) -> str:
             f"capabilities = [{caps}]\n"
         )
     base = cfg.base
+    mcp_blocks = []
+    for server in cfg.mcp_servers:
+        args = ", ".join(f'"{a}"' for a in server.args)
+        mcp_blocks.append(
+            "[[mcp_servers]]\n"
+            f'id = "{server.id}"\n'
+            f'title = "{server.title}"\n'
+            f'transport = "{server.transport}"\n'
+            f'command = "{server.command}"\n'
+            f"args = [{args}]\n"
+            f"enabled = {str(server.enabled).lower()}\n"
+            f"optional = {str(server.optional).lower()}\n"
+        )
+    channel_blocks = []
+    for ch in cfg.channels:
+        channel_blocks.append(
+            "[[channels]]\n"
+            f'kind = "{ch.kind}"\n'
+            f"enabled = {str(ch.enabled).lower()}\n"
+            f'note = "{ch.note}"\n'
+        )
     return (
         f'data_dir = "{_toml_path(cfg.data_dir)}"\n'
         f'sibyl_db = "{_toml_path(cfg.sibyl_db)}"\n'
@@ -195,6 +244,7 @@ def _to_toml(cfg: AnimaConfig) -> str:
         f"allow_web_fetch = {str(cfg.allow_web_fetch).lower()}\n"
         f"allow_web_crawl = {str(cfg.allow_web_crawl).lower()}\n"
         f"allow_explore = {str(cfg.allow_explore).lower()}\n"
+        f'active_experience_id = "{cfg.active_experience_id}"\n'
         f"amnesia = {str(cfg.amnesia).lower()}\n\n"
         "[base]\n"
         f'network = "{base.network}"\n'
@@ -207,4 +257,7 @@ def _to_toml(cfg: AnimaConfig) -> str:
         f'wallet_path = "{_toml_path(base.wallet_path)}"\n'
         f"dry_run = {str(base.dry_run).lower()}\n\n"
         + "\n".join(brains)
+        + ("\n\n" + "\n".join(mcp_blocks) if mcp_blocks else "")
+        + ("\n\n" + "\n".join(channel_blocks) if channel_blocks else "")
+        + "\n"
     )

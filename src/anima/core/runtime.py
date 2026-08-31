@@ -34,6 +34,7 @@ from anima.memory.writer import (
     save_last_trace,
     update_self,
 )
+from anima.mcp.registry import McpRegistry
 from anima.tools.permissions import may
 from anima.tools.registry import CapabilityRegistry
 from anima.tools.web import (
@@ -59,6 +60,7 @@ class Runtime:
         self.instinct = InstinctBrain("instinct")
         self.capabilities = CapabilityRegistry()
         self._apply_capability_grants()
+        self.mcp = McpRegistry(cfg)
         self.base = BaseAdapter(cfg.base)
         self.session_messages: list[tuple[str, str]] = []
         self._birth_done = False
@@ -73,6 +75,26 @@ class Runtime:
         for cap_id, enabled in grants.items():
             if enabled:
                 self.capabilities.grant(cap_id)
+
+    def _experience_hint(self) -> str:
+        exp_id = self.cfg.active_experience_id
+        if not exp_id:
+            return ""
+        from anima.experiences.marketplace import load_experience
+
+        pack = load_experience(self.cfg, exp_id)
+        if pack is None:
+            return ""
+        persona = pack.manifest.personality
+        parts = [f"Active experience pack: {pack.manifest.title} ({pack.id})."]
+        if persona.tone:
+            parts.append(f"Tone: {persona.tone}")
+        if pack.manifest.unique:
+            parts.append(pack.manifest.unique)
+        return " ".join(parts)
+
+    def _system(self, package: ContextPackage) -> str:
+        return system_preamble(package.amnesia, experience_hint=self._experience_hint())
 
     def grant_capability(self, cap_id: str, *, persist: bool = True) -> None:
         self.capabilities.grant(cap_id)
@@ -341,7 +363,7 @@ class Runtime:
         return context + "\n\nUSER:\n" + user_text
 
     def _stream_prompt(self, prompt: str, package: ContextPackage, brain_id: str):
-        system = system_preamble(package.amnesia)
+        system = self._system(package)
         try:
             brain = self.registry.get(brain_id)
         except KeyError:
@@ -435,7 +457,7 @@ class Runtime:
     def _complete_prompt(
         self, prompt: str, package: ContextPackage, brain_id: str, *, fallback: str = ""
     ) -> tuple[str, int, bool]:
-        system = system_preamble(package.amnesia)
+        system = self._system(package)
         try:
             brain = self.registry.get(brain_id)
         except KeyError:
@@ -448,7 +470,7 @@ class Runtime:
         return fallback or "I could not summarize that page.", result.latency_ms or 1, True
 
     def _think(self, user_text: str, package: ContextPackage, brain_id: str, bounded: bool) -> tuple[str, int, bool]:
-        system = system_preamble(package.amnesia)
+        system = self._system(package)
         prompt = self._build_prompt(user_text, package, bounded)
 
         try:

@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "verb",
         nargs="?",
-        help="onboard | setup | doctor | chat | a /command (for example /status)",
+        help="onboard | setup | doctor | experiences | channel | chat | a /command (for example /status)",
     )
     parser.add_argument("rest", nargs="*", help="Extra words for chat or /commands")
     args = parser.parse_args(argv)
@@ -118,6 +118,30 @@ def main(argv: list[str] | None = None) -> int:
         Console().print(reply.text)
         return 0 if reply.data.get("ok") else 1
 
+    if args.verb == "experiences":
+        from anima.app.commands import cmd_experiences
+        from anima.core.runtime import Runtime
+
+        runtime = Runtime(cfg, amnesia=cfg.amnesia)
+        reply = cmd_experiences(runtime, args.rest)
+        Console().print(reply.text)
+        return 0
+
+    if args.verb == "channel":
+        from anima.channels.runner import run_channel
+        from anima.core.runtime import Runtime
+
+        if not args.rest:
+            Console().print("Usage: anima channel telegram|discord")
+            return 1
+        runtime = Runtime(cfg, amnesia=cfg.amnesia)
+        try:
+            run_channel(runtime, args.rest[0].lower())
+        except (RuntimeError, ValueError) as exc:
+            Console().print(str(exc))
+            return 1
+        return 0
+
     from anima.core.runtime import Runtime
 
     runtime = Runtime(cfg, amnesia=cfg.amnesia)
@@ -132,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
         once = " ".join(args.rest)
     elif args.verb and args.verb.startswith("/"):
         once = " ".join([args.verb, *args.rest]).strip()
-    elif args.verb and args.verb not in {"chat"}:
+    elif args.verb and args.verb not in {"chat", "experiences", "channel"}:
         once = " ".join([args.verb, *args.rest]).strip()
 
     if once:

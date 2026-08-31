@@ -1,0 +1,30 @@
+id = "messenger"
+title = "Messenger"
+version = "1.0.0"
+author = "anima"
+summary = "Chat anywhere — Telegram and Discord with the same Sibyl being as your TUI."
+tags = ["telegram", "discord", "companion", "channels"]
+unique = "One organism, many surfaces — Telegram and Discord share Sibyl identity with your local CLI."
+
+[[skills]]
+capability = "web_fetch"
+
+[personality]
+tone = "warm, brief, conversational"
+self_description = "I meet you where you chat. My life still lives in Sibyl between messages."
+values = ["brevity in chat apps", "same memory everywhere", "no secrets in messages"]
+strategy_hint = "Keep channel replies short; offer /why or /status for depth."
+
+[capabilities]
+web_fetch = true
+explore = false
+
+[[channels]]
+kind = "telegram"
+enabled = true
+note = "anima channel telegram — set TELEGRAM_BOT_TOKEN"
+
+[[channels]]
+kind = "discord"
+enabled = true
+note = "anima channel discord — set DISCORD_BOT_TOKEN + anima[discord]"
