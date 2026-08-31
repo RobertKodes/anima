@@ -26,3 +26,8 @@ credentials.json
 anima.local.toml
 .env
 
+# Demo render scratch dirs
+recordings/.work/
+recordings/.work-cli/
+recordings/.assemble/
+

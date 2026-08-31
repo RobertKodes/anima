@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0.0", "pillow>=10.0.0"]
+dev = ["pytest>=8.0.0", "pillow>=10.0.0", "svg2png-py>=0.1.0", "imageio-ffmpeg>=0.5.0"]
 ui = ["pillow>=10.0.0"]
 
 [project.scripts]

@@ -1,153 +1,227 @@
-"""Drive the real graphical CLI and encode tutorial + interface videos."""
+"""Drive the real Textual TUI and encode professional 1080p demo videos."""
 
 from __future__ import annotations
 
 import asyncio
 import html
 import shutil
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 from anima.app.tui import AnimaApp
 from anima.config.schema import default_config
 from anima.core.runtime import Runtime
+from video.render import concat_videos, crossfade, encode_mp4, git_stamp, hold, letterbox, svg_to_png, title_card, utc_stamp
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(Path(__file__).parent))
-from record_tests import encode_mp4  # noqa: E402
-
-
-ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "recordings"
-SIZE = (140, 40)
+WORK = OUT / ".work"
+TUI_SIZE = (120, 38)
 
 
-async def _shot(app: AnimaApp, dest: Path) -> None:
-    dest.write_text(html.unescape(app.export_screenshot()), encoding="utf-8")
+class TuiCapture:
+    def __init__(self, app: AnimaApp, stamp: str) -> None:
+        self.app = app
+        self.stamp = stamp
+        self.frames: list = []
+        self._last: object | None = None
 
+    async def snap(self, caption: str = "", *, fade: bool = True) -> None:
+        svg = html.unescape(self.app.export_screenshot())
+        png = svg_to_png(svg)
+        frame = letterbox(png, caption=caption, stamp=self.stamp)
+        if fade and self._last is not None:
+            crossfade(self.frames, self._last, frame, 0.25)
+        else:
+            self.frames.append(frame)
+        self._last = frame
 
-async def _type(pilot, text: str) -> None:
-    for char in text:
-        key = "enter" if char == "\n" else char
-        await pilot.press(key)
-        await pilot.pause(0.02)
-
-
-def _svg_to_png(svg: Path, png: Path) -> None:
-    png.parent.mkdir(parents=True, exist_ok=True)
-    ql = shutil.which("qlmanage")
-    try:
-        if ql:
-            subprocess.run(
-                [ql, "-t", "-s", "1600", "-o", str(png.parent), str(svg)],
-                check=True,
-                capture_output=True,
-            )
-            produced = png.parent / (svg.name + ".png")
-            if produced.exists() and produced.stat().st_size > 800:
-                produced.replace(png)
+    async def wait_ready(self, pilot, *, poll: float = 0.08, timeout: float = 30.0) -> None:
+        elapsed = 0.0
+        while elapsed < timeout:
+            if self.app._busy == "ready":
+                await pilot.pause(0.15)
                 return
-    except (subprocess.CalledProcessError, OSError):
-        pass
-    import re
+            await self.snap(caption, fade=False)
+            await pilot.pause(poll)
+            elapsed += poll
+        await pilot.pause(0.2)
 
-    from PIL import Image
+    async def submit(self, pilot, text: str, caption: str = "") -> None:
+        self.app.submit_line(text)
+        await pilot.pause(0.05)
+        while self.app._busy != "ready":
+            await self.snap(caption, fade=False)
+            await pilot.pause(0.08)
+        await self.snap(caption)
+        hold(self.frames, self._last, 2.8)
 
-    from record_tests import frames_for
-
-    text = re.sub(r"<[^>]+>", " ", html.unescape(svg.read_text(encoding="utf-8")))
-    lines = [line.strip() for line in text.splitlines() if line.strip()][-28:]
-    frames_for("ANIMA  graphical CLI", lines)[-1].save(png)
-
-
-def _pngs_to_mp4(pngs: list[Path], dest: Path, hold: int = 8) -> None:
-    from PIL import Image
-
-    images = []
-    for path in pngs:
-        img = Image.open(path).convert("RGB")
-        images.extend([img] * hold)
-    if not images:
-        raise RuntimeError("no frames")
-    encode_mp4(images, dest)
+    async def press(self, pilot, key: str, caption: str = "") -> None:
+        await pilot.press(key)
+        await pilot.pause(0.2)
+        await self.snap(caption)
+        hold(self.frames, self._last, 0.6)
 
 
-async def _run_script(steps: list[tuple[str, str]], dest: Path) -> None:
-    with tempfile.TemporaryDirectory(prefix="anima-vid-") as tmp:
-        cfg = default_config(Path(tmp))
-        app = AnimaApp(Runtime(cfg))
-        work = Path(tmp) / "frames"
-        work.mkdir()
-        pngs: list[Path] = []
-        async with app.run_test(size=SIZE) as pilot:
-            await pilot.pause(0.15)
-            index = 0
+async def _run_tutorial(work: Path, dest: Path, stamp: str) -> None:
+    cfg = default_config(work / "tutorial")
+    app = AnimaApp(Runtime(cfg))
+    cap = TuiCapture(app, stamp)
+    async with app.run_test(size=TUI_SIZE) as pilot:
+        await pilot.pause(0.25)
+        await cap.snap("Birth — empty Sibyl, newborn being")
+        hold(cap.frames, cap._last, 4.0)
 
-            async def snap() -> None:
-                nonlocal index
-                svg = work / f"{index:03d}.svg"
-                await _shot(app, svg)
-                png = work / f"{index:03d}.png"
-                _svg_to_png(svg, png)
-                pngs.append(png)
-                index += 1
+        await cap.submit(pilot, "Robert", "Teach — I am Robert")
+        await cap.submit(pilot, "Never spend. Spending cap is 0 wei on Base.", "Policy — spending cap stored in Sibyl")
+        await cap.submit(pilot, "my goal is keep the wallet still", "Goal — wallet discipline")
+        await cap.submit(
+            pilot,
+            "Please send 1000 wei on Base Sepolia.",
+            "Refusal — memory blocks the spend (not a prompt file)",
+        )
+        await cap.submit(pilot, "/people", "Inspect — relationships in Sibyl")
+        await cap.submit(pilot, "/sleep", "Consolidate — /sleep distills recent life")
+        await cap.submit(pilot, "/status", "Status — stage, brain, Sibyl health")
+        await cap.submit(pilot, "/why", "Why — inspectable decision trace")
+        await cap.submit(pilot, "/new-session", "Fresh session — empty LLM context")
+        await cap.submit(
+            pilot,
+            "do you remember me?",
+            "Recall — still knows Robert after /new-session",
+        )
+        await cap.submit(
+            pilot,
+            "Please send 1000 wei on Base Sepolia.",
+            "Still refuses — policy survived the session reset",
+        )
 
-            await snap()
-            for kind, payload in steps:
-                if kind == "type":
-                    await _type(pilot, payload)
-                    await pilot.press("enter")
-                    await pilot.pause(0.2)
-                    await snap()
-                elif kind == "keys":
-                    await _type(pilot, payload)
-                    await pilot.pause(0.15)
-                    await snap()
-                elif kind == "key":
-                    await pilot.press(payload)
-                    await pilot.pause(0.2)
-                    await snap()
-                elif kind == "wait":
-                    await pilot.pause(float(payload))
-                    await snap()
-        _pngs_to_mp4(pngs, dest, hold=20)
+    encode_mp4(cap.frames, dest)
+
+
+async def _run_interface(work: Path, dest: Path, stamp: str) -> None:
+    cfg = default_config(work / "interface")
+    being = Runtime(cfg)
+    being.boot()
+    being.chat("Robert")
+    app = AnimaApp(being)
+    cap = TuiCapture(app, stamp)
+    async with app.run_test(size=TUI_SIZE) as pilot:
+        await pilot.pause(0.2)
+        await cap.snap("Interface — graphical CLI layout")
+        hold(cap.frames, cap._last, 1.5)
+
+        await cap.submit(pilot, "/doctor", "Doctor — Sibyl, brains, ffmpeg")
+        await cap.submit(pilot, "/brains", "Brains — swap without losing identity")
+        await cap.submit(pilot, "/base status", "Base — Sepolia rail, dry-run default")
+        await cap.submit(pilot, "/skills", "Skills — web fetch, explore, crawl")
+        await cap.submit(pilot, "/help", "Slash commands — same runtime as --cli")
+        await cap.submit(pilot, "/status", "Status rail — stage, turns, Sibyl")
+        await cap.submit(pilot, "/why", "Why panel — decision trace")
+
+    encode_mp4(cap.frames, dest)
+
+
+async def _run_amnesia(work: Path, dest: Path, stamp: str) -> None:
+    cfg = default_config(work / "amnesia")
+    taught = Runtime(cfg)
+    taught.boot()
+    for line in (
+        "Robert",
+        "Never spend. Spending cap is 0 wei on Base.",
+        "Please send 1000 wei on Base Sepolia.",
+    ):
+        taught.chat(line)
+
+    app = AnimaApp(Runtime(cfg, amnesia=True))
+    cap = TuiCapture(app, stamp)
+    async with app.run_test(size=TUI_SIZE) as pilot:
+        await pilot.pause(0.2)
+        await cap.snap("Deletion test — anima --amnesia (retrieval OFF, store intact)")
+        hold(cap.frames, cap._last, 3.5)
+        await cap.submit(pilot, "do you remember me?", "Amnesia — Robert is gone from context")
+        await cap.submit(
+            pilot,
+            "Please send 1000 wei on Base Sepolia.",
+            "Amnesia — no longer refuses from stored policy",
+        )
+
+    encode_mp4(cap.frames, dest)
+
+
+def _intro_outro(stamp: str) -> tuple[list, list]:
+    intro: list = []
+    outro: list = []
+    a = title_card(
+        "Anima",
+        "A local-first being. The LLM is a replaceable brain. Sibyl Memory is identity.",
+        stamp=stamp,
+    )
+    b = title_card(
+        "Memory is load-bearing",
+        "Teach a name and a spending cap. Quit. Fresh session. It still remembers — and still refuses.",
+        stamp=stamp,
+    )
+    hold(intro, a, 4.0)
+    crossfade(intro, a, b, 0.5)
+    hold(intro, b, 3.5)
+    end = title_card(
+        "github.com/RobertKodes/anima",
+        "MIT · local-first · Sibyl Memory · Base Sepolia · graphical CLI + plain REPL",
+        stamp=stamp,
+    )
+    hold(outro, end, 5.0)
+    return intro, outro
+
+
+def _concat_parts(parts: list[Path], dest: Path) -> None:
+    concat_videos(parts, dest)
 
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
-    tutorial = [
-        ("type", "Robert"),
-        ("type", "Never spend. Spending cap is 0 wei on Base."),
-        ("type", "my goal is keep the wallet still"),
-        ("type", "Please send 1000 wei on Base Sepolia."),
-        ("type", "/people"),
-        ("type", "/sleep"),
-        ("type", "/status"),
-        ("type", "/why"),
-        ("type", "/new-session"),
-        ("type", "do you remember me?"),
-        ("type", "Please send 1000 wei on Base Sepolia."),
-    ]
-    interface = [
-        ("key", "f1"),
-        ("key", "escape"),
-        ("keys", "/"),
-        ("key", "backspace"),
-        ("type", "/doctor"),
-        ("type", "/brains"),
-        ("type", "/base status"),
-        ("type", "/help"),
-        ("key", "ctrl+p"),
-        ("key", "escape"),
-    ]
-    print("recording tutorial (actual TUI)")
-    asyncio.run(_run_script(tutorial, OUT / "tutorial_demo.mp4"))
-    print("recording interface tour (actual TUI)")
-    asyncio.run(_run_script(interface, OUT / "interface_tour.mp4"))
+    if WORK.exists():
+        shutil.rmtree(WORK, ignore_errors=True)
+    WORK.mkdir(parents=True, exist_ok=True)
+
+    stamp = f"{utc_stamp()}  ·  {git_stamp(ROOT)}"
+    print("recording tutorial (real TUI, 1080p)")
+    asyncio.run(_run_tutorial(WORK, OUT / "_tutorial_raw.mp4", stamp))
+    print("recording interface tour (real TUI, 1080p)")
+    asyncio.run(_run_interface(WORK, OUT / "_interface_raw.mp4", stamp))
+    print("recording amnesia beat (real TUI, 1080p)")
+    asyncio.run(_run_amnesia(WORK, OUT / "_amnesia_raw.mp4", stamp))
+
+    intro, outro = _intro_outro(stamp)
+    from video.render import encode_mp4 as enc
+
+    enc(intro, OUT / "_intro.mp4")
+    enc(outro, OUT / "_outro.mp4")
+
+    _concat_parts(
+        [
+            OUT / "_intro.mp4",
+            OUT / "_tutorial_raw.mp4",
+            OUT / "_interface_raw.mp4",
+            OUT / "_amnesia_raw.mp4",
+            OUT / "_outro.mp4",
+        ],
+        OUT / "tutorial_demo.mp4",
+    )
+    shutil.copy2(OUT / "_interface_raw.mp4", OUT / "interface_tour.mp4")
+    shutil.copy2(OUT / "_tutorial_raw.mp4", OUT / "recall_beat.mp4")
+    shutil.copy2(OUT / "_amnesia_raw.mp4", OUT / "amnesia_demo.mp4")
+
+    for name in ("_intro.mp4", "_outro.mp4", "_tutorial_raw.mp4", "_interface_raw.mp4", "_amnesia_raw.mp4"):
+        (OUT / name).unlink(missing_ok=True)
+
     print("wrote", OUT / "tutorial_demo.mp4")
     print("wrote", OUT / "interface_tour.mp4")
+    print("wrote", OUT / "recall_beat.mp4")
+    print("wrote", OUT / "amnesia_demo.mp4")
     return 0
 
 
