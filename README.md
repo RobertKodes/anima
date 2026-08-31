@@ -4,7 +4,23 @@ A local-first AI **being** you keep on your machine. The language model is a bra
 
 Works on **Windows, macOS, and Linux**. No cloud account required to start.
 
-## Quick start
+## One-line install
+
+**Windows (PowerShell)**
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/RobertKodes/anima/master/install/install.ps1 | iex"
+```
+
+**macOS / Linux / WSL**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/RobertKodes/anima/master/install/install.sh | bash
+```
+
+That installs Python deps into `~/.anima/.venv`, runs `anima onboard --yes`, and adds the CLI to your PATH. More options: [`install/README.md`](install/README.md).
+
+## Manual install
 
 ```bash
 git clone https://github.com/RobertKodes/anima.git
