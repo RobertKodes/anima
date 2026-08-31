@@ -121,7 +121,12 @@ class Runtime:
         package, mem_traces = build_context(self.memory, intent, amnesia=self.amnesia)
         decision = route(intent, package, self.registry)
         brain_id = decision.brain_id
-        reply_text, latency, used_instinct = self._think(user_text, package, brain_id, decision.bounded)
+
+        if intent.kind == "ask_memory" and not self.amnesia:
+            reply_text = instinct_decide(user_text, package)
+            latency, used_instinct = 1, True
+        else:
+            reply_text, latency, used_instinct = self._think(user_text, package, brain_id, decision.bounded)
 
         if intent.kind == "remember_person" and not self.amnesia and package.people == []:
             # Relationship was just written; instinct/LLM should greet by name even if
@@ -273,8 +278,8 @@ def parse_intent(text: str) -> Intent:
     stripped = text.strip()
     lowered = stripped.lower()
     name = _extract_name(stripped)
-    if name and len(stripped.split()) <= 4:
-        return Intent("remember_person", stripped, {"name": name})
+    if name and (_is_name_introduction(stripped) or len(stripped.split()) <= 4):
+        return Intent("remember_person", stripped, {"name": name, "note": stripped})
     goal = _extract_goal(stripped)
     if goal:
         return Intent("set_goal", stripped, {"title": goal})
@@ -287,18 +292,33 @@ def parse_intent(text: str) -> Intent:
         return Intent("code", stripped, {})
     if "who are you" in lowered or "your name" in lowered:
         return Intent("ask_identity", stripped, {})
+    if any(
+        phrase in lowered
+        for phrase in ("who am i", "do you remember me", "what's my name", "what is my name")
+    ):
+        return Intent("ask_memory", stripped, {})
     return Intent("chat", stripped, {})
+
+
+def _is_name_introduction(text: str) -> bool:
+    lowered = text.lower()
+    return any(marker in lowered for marker in ("i am ", "i'm ", "my name is ", "call me "))
 
 
 def _extract_name(text: str) -> str | None:
     patterns = [
-        r"(?:i am|i'm|my name is|call me)\s+([A-Z][a-zA-Z]{1,30})",
-        r"^([A-Z][a-zA-Z]{1,30})$",
+        r"(?:i am|i'm|my name is|call me)\s+([a-zA-Z][a-zA-Z'-]{0,29})",
+        r"^([a-zA-Z][a-zA-Z'-]{0,29})$",
     ]
+    skip = {"a", "an", "the", "your", "maker", "hello", "hi", "hey"}
     for pattern in patterns:
-        match = re.search(pattern, text.strip())
-        if match:
-            return match.group(1)
+        match = re.search(pattern, text.strip(), re.I)
+        if not match:
+            continue
+        raw = match.group(1).strip().strip(".,!?")
+        if not raw or raw.lower() in skip:
+            continue
+        return raw[0].upper() + raw[1:] if len(raw) > 1 else raw.upper()
     return None
 
 
