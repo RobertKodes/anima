@@ -6,7 +6,9 @@ Dark, high-tech landing page for [Anima](https://github.com/RobertKodes/anima). 
 
 ## Features
 
-- Dark-first design — slate backgrounds, amber accent glow, dot-matrix grid
+- Dark terminal aesthetic matching the Anima TUI (`#140f0a`, amber prompts, orange borders)
+- **Y2K glassmorphism** — frosted panels, iridescent borders, floating orbs, CRT scanlines
+- **Parallax** — scroll-driven layers + subtle mouse shift on orbs
 - **GSAP + ScrollTrigger** — cinematic section reveals, kinetic typography, scroll progress
 - **Bento grids** — 3D tilt + cursor glow on Memory and Experiences sections
 - **Magnetic buttons** — primary CTAs pull toward cursor (desktop hover only)

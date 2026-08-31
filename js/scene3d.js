@@ -1,6 +1,5 @@
 /**
- * Dark-tech 3D hero — Three.js wireframe being (brain + memory metaphor).
- * Respects prefers-reduced-motion: static frame only.
+ * Dark-tech 3D hero — Anima terminal palette (#140f0a, amber, cyan Y2K).
  */
 
 (function () {
@@ -13,40 +12,43 @@
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x0a0c10, 1);
+  renderer.setClearColor(0x140f0a, 1);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
   camera.position.set(0, 0.4, 4.2);
 
-  const ambient = new THREE.AmbientLight(0x8b93a7, 0.4);
+  const ambient = new THREE.AmbientLight(0x8a7a68, 0.45);
   scene.add(ambient);
-  const key = new THREE.DirectionalLight(0xe8a04a, 1.4);
+  const key = new THREE.DirectionalLight(0xe8a04a, 1.5);
   key.position.set(3, 4, 5);
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0x5eb8d4, 0.55);
+  const fill = new THREE.DirectionalLight(0x6ee7ff, 0.5);
   fill.position.set(-4, -1, 2);
   scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xff6eb4, 0.25);
+  rim.position.set(0, -3, -2);
+  scene.add(rim);
 
   const group = new THREE.Group();
   scene.add(group);
 
   const matCore = new THREE.MeshStandardMaterial({
     color: 0xe8a04a,
-    roughness: 0.25,
+    roughness: 0.2,
+    metalness: 0.45,
+    flatShading: true,
+    emissive: 0xc45c26,
+    emissiveIntensity: 0.35,
+  });
+  const matWire = new THREE.MeshBasicMaterial({ color: 0x6ee7ff, wireframe: true, transparent: true, opacity: 0.28 });
+  const matOrb = new THREE.MeshStandardMaterial({
+    color: 0xc45c26,
+    roughness: 0.3,
     metalness: 0.35,
     flatShading: true,
-    emissive: 0x3d2a0a,
-    emissiveIntensity: 0.4,
-  });
-  const matWire = new THREE.MeshBasicMaterial({ color: 0xe8a04a, wireframe: true, transparent: true, opacity: 0.35 });
-  const matOrb = new THREE.MeshStandardMaterial({
-    color: 0x5eb8d4,
-    roughness: 0.3,
-    metalness: 0.4,
-    flatShading: true,
-    emissive: 0x1a3040,
-    emissiveIntensity: 0.3,
+    emissive: 0xff6eb4,
+    emissiveIntensity: 0.2,
   });
 
   const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.85, 1), matCore);
@@ -66,7 +68,7 @@
 
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(6, 6),
-    new THREE.MeshStandardMaterial({ color: 0x12151c, roughness: 1, metalness: 0 })
+    new THREE.MeshStandardMaterial({ color: 0x1e1610, roughness: 1, metalness: 0 })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -1.35;

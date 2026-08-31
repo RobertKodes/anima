@@ -29,6 +29,27 @@
     if (hash && document.getElementById(hash)) {
       window.setTimeout(() => scrollToSection(hash), 100);
     }
+
+    initSectionStatus();
+  }
+
+  function initSectionStatus() {
+    const stage = document.getElementById("status-stage");
+    if (!stage || typeof IntersectionObserver === "undefined") return;
+
+    const sections = document.querySelectorAll(".section[data-title]");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const title = entry.target.dataset.title || entry.target.id;
+            stage.textContent = title.toLowerCase();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+    sections.forEach((s) => observer.observe(s));
   }
 
   if (document.readyState === "loading") {
