@@ -80,6 +80,33 @@ add_path_hint() {
   export PATH="$bin:$PATH"
 }
 
+anima_pip_source() {
+  if [[ -n "${ANIMA_PIP_URL:-}" ]]; then
+    echo "$ANIMA_PIP_URL"
+    return
+  fi
+  local repo="${ANIMA_REPO%.git}"
+  if [[ "$repo" =~ github\.com/([^/]+/[^/]+)$ ]]; then
+    echo "https://github.com/${BASH_REMATCH[1]}/archive/refs/heads/${ANIMA_BRANCH}.zip"
+    return
+  fi
+  echo "git+${ANIMA_REPO}@${ANIMA_BRANCH}"
+}
+
+install_anima_package() {
+  local source
+  source="$(anima_pip_source)"
+  log "Installing Anima from $source ..."
+  if python -m pip install "$source"; then
+    return 0
+  fi
+  if [[ "$source" != git+* ]]; then
+    warn "Zip install failed; retrying via git (requires git)..."
+    python -m pip install "git+${ANIMA_REPO}@${ANIMA_BRANCH}" && return 0
+  fi
+  fail "pip install failed. If git errors persist, install git or set ANIMA_PIP_URL to a release zip."
+}
+
 PYTHON="$(find_python || true)"
 [[ -n "$PYTHON" ]] || fail "Python 3.10+ is required. Install from https://www.python.org/downloads/"
 
@@ -88,7 +115,7 @@ log "Install root: $ANIMA_HOME"
 log "Virtual env: $ANIMA_VENV"
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
-  log "[dry-run] would create venv and pip install git+$ANIMA_REPO@$ANIMA_BRANCH"
+  log "[dry-run] would create venv and pip install $(anima_pip_source)"
   [[ "$NO_ONBOARD" -eq 1 ]] || log "[dry-run] would run: anima onboard --yes"
   exit 0
 fi
@@ -102,8 +129,7 @@ fi
 # shellcheck disable=SC1091
 source "$ANIMA_VENV/bin/activate"
 python -m pip install --upgrade pip wheel >/dev/null
-log "Installing Anima from $ANIMA_REPO ($ANIMA_BRANCH)..."
-python -m pip install "git+${ANIMA_REPO}@${ANIMA_BRANCH}"
+install_anima_package
 
 add_path_hint
 

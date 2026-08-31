@@ -100,6 +100,28 @@ function Install-AnimaLauncher([string]$ScriptsDir) {
     }
 }
 
+function Get-AnimaPipSource {
+    if ($env:ANIMA_PIP_URL) { return $env:ANIMA_PIP_URL }
+    $repo = $AnimaRepo.TrimEnd("/").Replace(".git", "")
+    if ($repo -match "github\.com/([^/]+/[^/]+)$") {
+        return "https://github.com/$($Matches[1])/archive/refs/heads/$AnimaBranch.zip"
+    }
+    return "git+${AnimaRepo}@${AnimaBranch}"
+}
+
+function Install-AnimaPackage {
+    $source = Get-AnimaPipSource
+    Write-AnimaLog "Installing Anima from $source ..."
+    python -m pip install $source
+    if ($LASTEXITCODE -ne 0 -and $source -notlike "git+*") {
+        Write-AnimaWarn "Zip install failed; retrying via git (requires git)..."
+        python -m pip install "git+${AnimaRepo}@${AnimaBranch}"
+    }
+    if ($LASTEXITCODE -ne 0) {
+        Write-AnimaFail "pip install failed. If git errors persist, install git or set ANIMA_PIP_URL to a release zip."
+    }
+}
+
 function Invoke-AnimaCli([string]$ScriptsDir, [string[]]$CliArgs) {
     $venvPython = Join-Path $ScriptsDir "python.exe"
     & $venvPython -c "import sys; from anima.app.cli import main; raise SystemExit(main(sys.argv[1:]))" @CliArgs
@@ -119,7 +141,8 @@ Write-AnimaLog "Install root: $AnimaHome"
 Write-AnimaLog "Virtual env: $AnimaVenv"
 
 if ($DryRun) {
-    Write-AnimaLog "[dry-run] would create venv and pip install git+$AnimaRepo@$AnimaBranch"
+    $drySource = Get-AnimaPipSource
+    Write-AnimaLog "[dry-run] would create venv and pip install $drySource"
     if (-not $NoOnboard) { Write-AnimaLog "[dry-run] would run: python -m anima onboard --yes" }
     exit 0
 }
@@ -135,8 +158,7 @@ $activate = Join-Path $AnimaVenv "Scripts\Activate.ps1"
 . $activate
 
 python -m pip install --upgrade pip wheel | Out-Null
-Write-AnimaLog "Installing Anima from $AnimaRepo ($AnimaBranch)..."
-python -m pip install "git+${AnimaRepo}@${AnimaBranch}"
+Install-AnimaPackage
 
 $scripts = Join-Path $AnimaVenv "Scripts"
 Install-AnimaLauncher $scripts

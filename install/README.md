@@ -57,6 +57,7 @@ curl -fsSL https://raw.githubusercontent.com/RobertKodes/anima/master/install/in
 | `ANIMA_VENV` | `$ANIMA_HOME/.venv` | Virtual environment path |
 | `ANIMA_REPO` | GitHub repo URL | Fork or mirror |
 | `ANIMA_BRANCH` | `master` | Branch to install |
+| `ANIMA_PIP_URL` | GitHub zip URL | Override install source (skips git clone) |
 
 ## Requirements
 
