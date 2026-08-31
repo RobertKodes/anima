@@ -97,6 +97,10 @@ Data lives in `~/.anima/` (or `%USERPROFILE%\.anima` on Windows). Override with 
 | `/skills` | List available skills |
 | `/capabilities grant web_fetch` | Enable a skill mid-session |
 | `anima --amnesia` | Talk without retrieval (store is not deleted) |
+| `anima sibyl setup` | Link Sibyl Pro credentials after `sibyl init` |
+| `/sibyl status` | Tier, cap, db path |
+| `/experiences apply scholar` | Apply an experience pack |
+| `/mcp call anima-sibyl search {"query":"…"}` | In-process Sibyl memory tools |
 
 **TUI keys:** tab slash hints · ctrl+p palette · F1 help · F3 sleep · ctrl+n new session · ctrl+c leave
 
@@ -152,6 +156,27 @@ Teach the being a name, a goal, or a spending cap. Quit. Open a fresh session wi
 
 `anima --amnesia` turns retrieval off without deleting the store. Same brain, same prompt, different behavior. That is the deletion test.
 
+**Pro tier (hackathon):** free through the event — cap lifted after `sibyl init`.
+
+```bash
+pip install 'sibyl-memory-cli[mcp]'
+sibyl init
+anima sibyl setup
+anima sibyl status    # or /sibyl status in chat
+```
+
+Inspect: `/memory search`, `/self`, `/why`. Built-in MCP `anima-sibyl` (search, recent, self, people) uses the same store as chat. Architecture: [`docs/SIBYL.md`](docs/SIBYL.md).
+
+## Experiences
+
+Skill + MCP + personality packs seeded into Sibyl — not markdown skins.
+
+```bash
+anima experiences list
+anima experiences apply scholar
+/mcp list
+```
+
 ## Base (optional)
 
 Default network: **Base Sepolia**. Dry-run is on until you fund a wallet and opt in.
@@ -171,7 +196,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-More docs: [`docs/HACKATHON.md`](docs/HACKATHON.md) · [`docs/USE_CASES.md`](docs/USE_CASES.md) · [`docs/PRD_CLI_v0.1.md`](docs/PRD_CLI_v0.1.md)
+More docs: [`docs/HACKATHON.md`](docs/HACKATHON.md) · [`docs/SIBYL.md`](docs/SIBYL.md) · [`docs/HACKATHON_FORM_FILL.txt`](docs/HACKATHON_FORM_FILL.txt) · [`docs/USE_CASES.md`](docs/USE_CASES.md)
 
 ## Stack
 

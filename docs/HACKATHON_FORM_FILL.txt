@@ -1,0 +1,172 @@
+================================================================================
+SIBYL HACKATHON — FORMULAR COMPLET (copy/paste)
+Anima · RobertKodes
+================================================================================
+
+Completează ce e marcat [TU] după ce postezi pe X / uploadezi video.
+Restul poți copia direct în formular.
+
+================================================================================
+LINKURI SITE (pentru tine / bio / post)
+================================================================================
+
+Site live (presentation):
+  https://robertkodes.github.io/anima/
+
+GitHub repo:
+  https://github.com/RobertKodes/anima
+
+Hackathon judge path:
+  https://github.com/RobertKodes/anima/blob/master/docs/HACKATHON.md
+
+Sibyl architecture (Anima):
+  https://github.com/RobertKodes/anima/blob/master/docs/SIBYL.md
+
+Demo videos (în repo — upload pe YouTube/X pentru URL formular):
+  https://github.com/RobertKodes/anima/tree/master/recordings
+
+Install (one-line):
+  https://github.com/RobertKodes/anima#one-line-install
+
+Sibyl Memory (PyPI client):
+  https://pypi.org/project/sibyl-memory-client/
+
+Sibyl Labs docs:
+  https://docs.sibyllabs.org/memory
+
+Star Sibyl repo (formular cere):
+  https://github.com/sibyllabs/sibyl-memory
+  (sau URL-ul oficial din formular — dă star înainte de submit)
+
+================================================================================
+SETUP SIBYL MEMORY (Pro tier — fă asta pe PC înainte de submit)
+================================================================================
+
+1) pip install 'sibyl-memory-cli[mcp]'
+
+2) sibyl init
+   → browser, sign in email sau wallet
+
+3) sibyl setup
+   (sau pentru Anima: anima sibyl setup — leagă credentialele în ~/.anima/secrets/)
+
+4) sibyl status
+   → confirmă Pro tier + path memorie
+
+5) Verifică în Anima:
+   anima doctor
+   anima sibyl status
+   /sibyl status
+
+================================================================================
+FORMULAR — CÂMPURI
+================================================================================
+
+--- Public repo URL ---
+https://github.com/RobertKodes/anima
+
+
+--- Demo video URL ---
+[TU — alege una]
+
+Opțiune A — post X cu video (recomandat dacă formular acceptă link X):
+  https://x.com/[USER]/status/[ID]
+
+Opțiune B — YouTube (upload recordings/hackathon_demo.mp4 sau recall_beat.mp4):
+  https://youtube.com/watch?v=[ID]
+
+Opțiune C — Loom:
+  https://www.loom.com/share/[ID]
+
+Video recomandat de uploadat:
+  • recall_beat.mp4     — scurt, recall beat (best hook)
+  • hackathon_demo.mp4  — complet ~2:38 (recall + CLI + amnesia)
+  • tutorial_demo.mp4   — TUI killer flow cu intro/outro
+
+Cale locală (nu pune în formular, doar pentru upload):
+  C:\Users\ropet\Desktop\anima\recordings\recall_beat.mp4
+  C:\Users\ropet\Desktop\anima\recordings\hackathon_demo.mp4
+
+
+--- Post URLs (one per line, 2+) ---
+[TU — completează după postări]
+
+https://x.com/[USER]/status/[POST1]
+https://x.com/[USER]/status/[POST2]
+
+(opțional al 3-lea):
+https://x.com/[USER]/status/[POST3]
+
+Sugestie ce postezi:
+  Post 1 = recall_beat.mp4 + text principal (@sibylcap @base)
+  Post 2 = amnesia_demo.mp4 + deletion test thread
+
+
+--- What breaks when memory is deleted? ---
+Without memory, our agent forgets the user's name, relationships, goals, and stored policies — and the product becomes a generic chatbot that will approve Base spends it previously refused and cannot maintain identity across sessions or brain swaps.
+
+
+--- Memory walkthrough (3 lines — judges score 40% from this) ---
+
+Persist:
+We persist self-model (name, values), people, goals, Base spending policies, journal episodes, and sleep consolidation into Sibyl via set_entity and write_event — no MEMORY.md or prompt files.
+
+Recall (fresh session):
+On every turn retrieval.py queries Sibyl FTS5 + entities before the LLM runs; after /new-session or restart with empty model context, "do you remember me?" and /memory search still return the taught name and facts.
+
+Changes the agent's decision by:
+A remembered 0-wei Base cap stored in Sibyl blocks on-chain spends after context is cleared; anima --amnesia disables retrieval so the same prompt gets newborn replies while the SQLite file stays on disk — proving memory is load-bearing, not decorative.
+
+
+--- Memory primitives you used (bifează în formular) ---
+
+☑ recall              — retrieval.py builds context package before every reply
+☑ entities            — self/being, person/*, goal/*, policy/* via set_entity
+☑ semantic search     — Sibyl FTS5 search + /memory search + anima-sibyl MCP
+☑ temporal / time-travel — journal read_events with timestamps; /memory recent
+☑ summarization       — /sleep consolidation; Sibyl learn(mode=local-deterministic)
+☑ reflection          — /why traces memories and brains; /sibyl lint
+☑ consolidation       — sleep cycle writes strategies and inspectable dream state
+
+(Dacă formularul e single-select, bifează toate care se aplică — Anima folosește toate.)
+
+
+================================================================================
+TEXT SCURT EXTRA (dacă formularul are "description" sau "about")
+================================================================================
+
+Anima is a local-first AI being: Sibyl Memory is identity, the LLM is a replaceable brain. Graphical CLI (Textual) + plain REPL. Experiences Marketplace seeds personality into Sibyl, not markdown. Built-in anima-sibyl MCP shares the same store as chat. MIT · 61 tests · deletion test via --amnesia.
+
+
+================================================================================
+DELETION TEST — one-liner (dacă e câmp separat)
+================================================================================
+
+Run anima --amnesia: retrieval off, newborn behavior, Sibyl file untouched. Restart without flag — memory returns. Proof: tests/test_deletion_test.py + recordings/amnesia_demo.mp4
+
+
+================================================================================
+CHECKLIST ÎNAINTE DE SUBMIT
+================================================================================
+
+[ ] pip install 'sibyl-memory-cli[mcp]' + sibyl init + sibyl status (Pro)
+[ ] anima sibyl setup + anima doctor — store OK
+[ ] Star Sibyl Memory repo on GitHub
+[ ] Star / public repo Anima deja: github.com/RobertKodes/anima
+[ ] Video uploadat → URL demo completat
+[ ] Minim 2 posturi X → URL-uri completate
+[ ] @sibylcap @base în postări (partners)
+[ ] Memory walkthrough copiat (3 linii)
+[ ] Primitives bifate (toate 7 dacă permite)
+
+================================================================================
+ORDINE RECOMANDATĂ
+================================================================================
+
+1. sibyl init + anima sibyl setup (2 min)
+2. Post X #1 cu recall_beat.mp4 → copiază URL în formular
+3. Post X #2 cu amnesia_demo.mp4 → copiază URL
+4. (Opțional) YouTube hackathon_demo.mp4 → demo URL dacă preferi
+5. Submit formular cu textele de mai sus
+
+================================================================================

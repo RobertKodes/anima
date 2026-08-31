@@ -96,6 +96,8 @@ python scripts/hackathon_smoke.py
 
 ## Form fill-ins (Sibyl Labs hackathon)
 
+**Copy/paste pack:** [`docs/HACKATHON_FORM_FILL.txt`](HACKATHON_FORM_FILL.txt) · phone pack: [`docs/POST_PACK_FOR_PHONE.txt`](POST_PACK_FOR_PHONE.txt)
+
 **Repo URL:** https://github.com/RobertKodes/anima
 
 **Demo URL:** https://robertkodes.github.io/anima/ · videos in `recordings/hackathon_demo.mp4`

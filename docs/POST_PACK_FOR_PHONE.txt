@@ -1,0 +1,159 @@
+================================================================================
+ANIMA — PACHET PENTRU TELEFON (trimite email la tine)
+================================================================================
+
+SUBIECT EMAIL:
+  Anima — texte Twitter/X + hackathon + ce video atașezi
+
+--------------------------------------------------------------------------------
+CORP EMAIL (copiază-l sau lasă-l așa)
+--------------------------------------------------------------------------------
+
+Salut,
+
+Tot ce am nevoie pentru postare pe X și formular Sibyl — textele sunt mai jos.
+Pe PC atașez videoclipurile din folderul recordings\ (sau le upload direct pe X de pe laptop).
+
+Site: https://robertkodes.github.io/anima/
+Repo: https://github.com/RobertKodes/anima
+
+================================================================================
+CE VIDEO SĂ FOLOSEȘTI
+================================================================================
+
+POST PRINCIPAL (Twitter/X):
+  → recall_beat.mp4
+  Cale PC: C:\Users\ropet\Desktop\anima\recordings\recall_beat.mp4
+  Conținut: naștere → înveți nume + cap → sleep → „do you remember me?”
+
+REPLY / AL DOILEA POST (opțional):
+  → amnesia_demo.mp4
+  Cale PC: C:\Users\ropet\Desktop\anima\recordings\amnesia_demo.mp4
+  Conținut: același prompt cu --amnesia, memoria e „gata”
+
+BACKUP (totul într-un clip ~2:38):
+  → hackathon_demo.mp4
+  Cale PC: C:\Users\ropet\Desktop\anima\recordings\hackathon_demo.mp4
+
+IMPORTANT: Upload video DIRECT pe X (nu link GitHub). Textul îl copiezi de pe telefon.
+
+================================================================================
+POST PRINCIPAL X (cu recall_beat.mp4)
+================================================================================
+
+Built Anima for the @sibylcap hackathon — a local-first AI *being*, not a chatbot skin.
+
+The LLM is a replaceable brain.
+Sibyl Memory is the self.
+
+→ Teach it your name + a spending cap
+→ Quit, empty model context
+→ It still remembers — and still refuses what memory forbids
+
+No MEMORY.md. Identity lives in Sibyl SQLite + FTS5.
+
+Open source · MIT
+https://robertkodes.github.io/anima/
+https://github.com/RobertKodes/anima
+
+@base action rail · local Ollama · graphical CLI
+
+TAGS: @sibylcap @base
+HASHTAGS (max 2-3): #SibylMemory #LocalFirst #OpenSource
+
+================================================================================
+VARIANTĂ SCURTĂ X
+================================================================================
+
+Your chatbot forgets when the session ends.
+
+Anima doesn't — because identity isn't in the prompt. It's in @sibylcap Memory.
+
+Swap Ollama ↔ cloud. Same being.
+Turn off retrieval (--amnesia) → chatbot again. File never deleted.
+
+https://github.com/RobertKodes/anima
+
+@base
+
+================================================================================
+REPLY / THREAD #2 (cu amnesia_demo.mp4)
+================================================================================
+
+Deletion test:
+
+Same machine. Same brain. Same question.
+
+anima --amnesia → newborn replies. No recall.
+
+The Sibyl store on disk? Untouched.
+
+Memory isn't decoration — it's load-bearing.
+
+/sibyl status · /memory search · built-in anima-sibyl MCP
+
+================================================================================
+BUILD LOG (fără video sau cu interface_tour.mp4)
+================================================================================
+
+What we refused to build:
+
+❌ MEMORY.md personality files
+❌ A new being per model swap
+❌ Secrets in the memory store
+
+What we did build:
+
+✅ retrieval → brain → writer on every turn
+✅ Textual TUI + streaming --cli
+✅ Experiences that seed Sibyl, not markdown
+
+Judge path: github.com/RobertKodes/anima/blob/master/docs/HACKATHON.md
+
+@sibylcap
+
+================================================================================
+FORMULAR HACKATHON SIBYL — COPY/PASTE
+================================================================================
+
+Repo URL:
+https://github.com/RobertKodes/anima
+
+Demo URL:
+https://robertkodes.github.io/anima/
+Video: recordings/hackathon_demo.mp4 sau recall_beat.mp4
+
+Memory walkthrough:
+Every turn: retrieval.py builds context from Sibyl FTS5 + entities → brain → writer.py persists facts. Inspect with /memory search, /self, /sibyl status. Experience packs seed self/being in Sibyl. Built-in MCP anima-sibyl exposes the same store (search, recent, self, people) without a subprocess.
+
+Deletion test:
+Run anima --amnesia. Teach a name in normal mode; /memory search finds it. In amnesia mode, search returns nothing and replies are newborn — but ~/.anima/sibyl/anima.db is unchanged. Restart without --amnesia and memory returns.
+
+Sibyl primitives:
+set_entity, write_event, search (FTS5), read_events, set_state, lint, learn, list_skill_proposals. Free tier local SQLite; Pro via sibyl init + anima sibyl setup.
+
+================================================================================
+CHECKLIST ÎNAINTE DE POST
+================================================================================
+
+[ ] Video uploadat direct pe X (recall_beat.mp4)
+[ ] @sibylcap și @base în post
+[ ] Pin postul principal
+[ ] Reply cu amnesia_demo.mp4 (opțional)
+[ ] Link site + GitHub în post
+
+================================================================================
+FIȘIERE DE ATAȘAT LA EMAIL (de pe PC)
+================================================================================
+
+Minim pentru telefon (doar text):
+  - acest fișier: docs\POST_PACK_FOR_PHONE.txt
+
+Dacă vrei videoclipuri în email (pot fi mari pentru Gmail):
+  - recordings\recall_beat.mp4      ← PRINCIPAL
+  - recordings\amnesia_demo.mp4       ← reply
+  - recordings\hackathon_demo.mp4     ← backup complet
+
+Alternativă: trimite doar acest .txt pe email; videourile le uploadezi pe X de pe PC.
+
+================================================================================

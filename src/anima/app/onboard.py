@@ -620,6 +620,7 @@ def _print_verify_ok(console: Console, candidate: BrainCandidate, probe: dict[st
         console.print(f"[dim]Probe latency {probe['latency_ms']} ms · reply {probe.get('text')!r}[/]")
     console.print(f"[dim]Config[/] {cfg.data_dir / 'config.toml'}")
     console.print("\nNext: [bold #e8a04a]anima[/]  ·  [bold]anima doctor[/]  ·  [bold]anima --cli[/]")
+    console.print("[dim]Pro tier:[/] pip install 'sibyl-memory-cli[mcp]' · sibyl init · anima sibyl setup")
 
 
 def _print_success(
@@ -636,6 +637,7 @@ def _print_success(
     console.print(f"Sibyl store: [bold]{cfg.sibyl_db}[/]")
     console.print("\nNext: [bold #e8a04a]anima[/]  — graphical CLI")
     console.print("      [bold]anima doctor[/] — check this machine")
+    console.print("      [bold]anima sibyl setup[/] — after sibyl init (Pro tier, hackathon)")
     console.print("      [bold]anima onboard --classic[/] — config-only wizard")
 
 
