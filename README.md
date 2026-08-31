@@ -61,18 +61,22 @@ cd anima
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -e .
-anima setup --yes          # writes config; picks Ollama if it is running
-anima doctor               # toolchain check
-anima                      # graphical CLI
+anima onboard --yes          # detect brain, live-probe, write config
+anima doctor                 # toolchain check
+anima                        # graphical CLI (auto-onboards on first launch)
 ```
 
 | Command | What you get |
 |---|---|
-| `anima` | Graphical CLI (default on a TTY) |
+| `anima` | Graphical CLI (default on a TTY); first launch runs onboard |
+| `anima onboard` | Guided setup: detect brain → live probe → save config |
+| `anima onboard --yes` | Non-interactive onboard (CI/scripts) |
+| `anima onboard --json` | Machine-readable onboard summary |
+| `anima setup` | Classic config-only wizard (no live probe) |
 | `anima --tui` | Force the graphical CLI |
 | `anima --cli` | Classic REPL |
 | `anima --ui` | Local web companion |
-| `anima setup` | First-run wizard |
+| `anima setup` | Classic config-only wizard |
 | `anima doctor` | Health check |
 | `anima /status` | One-shot slash command |
 | `anima --brain ollama --model qwen3:1.7b` | Local LLM |

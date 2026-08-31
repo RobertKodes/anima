@@ -158,6 +158,7 @@ def run_setup(data_dir: Path | None = None, *, yes: bool = False, brain: str | N
     console.print(f"\nWrote [bold]{path}[/]")
     console.print(f"Sibyl store: [bold]{cfg.sibyl_db}[/]")
     console.print("\nNext: [bold #e8a04a]anima[/]  — graphical CLI")
+    console.print("      [bold]anima onboard[/] — detect + live-probe a brain")
     console.print("      [bold]anima doctor[/] — check this machine")
     console.print("      [bold]anima --cli[/] — classic REPL")
     return 0

@@ -93,6 +93,12 @@ def default_config(data_dir: Path | None = None) -> AnimaConfig:
     )
 
 
+def config_exists(path: Path | None = None, data_dir: Path | None = None) -> bool:
+    cfg = default_config(data_dir)
+    file_path = path or (cfg.data_dir / "config.toml")
+    return file_path.is_file()
+
+
 def load_config(path: Path | None = None, data_dir: Path | None = None) -> AnimaConfig:
     cfg = default_config(data_dir)
     file_path = path or (cfg.data_dir / "config.toml")

@@ -15,7 +15,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from anima.config.schema import AnimaConfig, BrainConfig, load_config
+from anima.config.schema import AnimaConfig, BrainConfig, config_exists, load_config
 
 if TYPE_CHECKING:
     from anima.core.runtime import Runtime
@@ -36,19 +36,48 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--brain", choices=("fake", "ollama", "llama_cpp"), help="Override the primary brain provider")
     parser.add_argument("--model", help="Override the primary brain model id")
     parser.add_argument("--ui", action="store_true", help="Open the graphical web companion")
-    parser.add_argument("--yes", "-y", action="store_true", help="Non-interactive defaults for setup")
+    parser.add_argument("--yes", "-y", action="store_true", help="Non-interactive defaults for setup/onboard")
+    parser.add_argument("--non-interactive", action="store_true", help="Scripted onboard/setup (no prompts)")
+    parser.add_argument("--json", action="store_true", help="Machine-readable onboard output")
+    parser.add_argument("--skip-probe", action="store_true", help="Skip live brain probe during onboard")
+    parser.add_argument("--classic", action="store_true", help="Config-only setup wizard (no live probe)")
+    parser.add_argument("--launch", action="store_true", help="Open the graphical CLI after onboard")
     parser.add_argument(
         "verb",
         nargs="?",
-        help="setup | doctor | chat | a /command (for example /status)",
+        help="onboard | setup | doctor | chat | a /command (for example /status)",
     )
     parser.add_argument("rest", nargs="*", help="Extra words for chat or /commands")
     args = parser.parse_args(argv)
 
-    if args.verb == "setup" or args.init:
-        from anima.app.setup import run_setup
+    if args.verb in {"onboard", "setup"} or args.init:
+        from anima.app.onboard import run_onboard
 
-        return run_setup(args.data, yes=args.yes or args.init, brain=args.brain, model=args.model)
+        use_classic = args.classic or args.verb == "setup"
+        return run_onboard(
+            args.data,
+            non_interactive=args.non_interactive or args.yes or args.init,
+            yes=args.yes or args.init,
+            brain=args.brain,
+            model=args.model,
+            skip_probe=args.skip_probe,
+            json_output=args.json,
+            classic=use_classic,
+            launch=args.launch,
+        )
+
+    if _should_auto_onboard(args):
+        from anima.app.onboard import run_onboard
+
+        return run_onboard(
+            args.data,
+            non_interactive=args.yes,
+            yes=args.yes,
+            brain=args.brain,
+            model=args.model,
+            skip_probe=args.skip_probe,
+            launch=True,
+        )
 
     cfg = load_config(args.config, args.data)
     if args.amnesia:
@@ -92,6 +121,18 @@ def main(argv: list[str] | None = None) -> int:
 
     run_tui(runtime)
     return 0
+
+
+def _should_auto_onboard(args: argparse.Namespace) -> bool:
+    if args.verb is not None or args.once or args.ui or args.amnesia or args.init:
+        return False
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        return False
+    return needs_onboarding(args.data, args.config)
+
+
+def needs_onboarding(data_dir: Path | None, config_path: Path | None) -> bool:
+    return not config_exists(config_path, data_dir)
 
 
 def _apply_brain_override(cfg: AnimaConfig, provider: str, model: str | None) -> None:
