@@ -10,6 +10,12 @@ Scripts live in this folder and are served from GitHub:
 powershell -NoProfile -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/RobertKodes/anima/master/install/install.ps1 | iex"
 ```
 
+On systems with **Application Control** (common on managed Windows), pip's `anima.exe` shim may be blocked. The installer replaces it with `anima.cmd`, which runs Anima through the venv's `python.exe`. Fallback:
+
+```powershell
+& "$env:USERPROFILE\.anima\.venv\Scripts\python.exe" -c "from anima.app.cli import main; raise SystemExit(main(['onboard','--yes']))"
+```
+
 Alternative:
 
 ```powershell

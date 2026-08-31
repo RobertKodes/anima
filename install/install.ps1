@@ -83,6 +83,29 @@ function Add-AnimaPath([string]$ScriptsDir) {
     }
 }
 
+function Install-AnimaLauncher([string]$ScriptsDir) {
+    # pip's anima.exe is often blocked by Windows Application Control; run via python instead.
+    $launcher = Join-Path $ScriptsDir "anima.cmd"
+    $content = @"
+@echo off
+"%~dp0python.exe" -c "import sys; from anima.app.cli import main; raise SystemExit(main(sys.argv[1:]))" %*
+"@
+    Set-Content -Path $launcher -Value $content -Encoding ASCII
+    $exe = Join-Path $ScriptsDir "anima.exe"
+    if (Test-Path $exe) {
+        Remove-Item -Force $exe
+        Write-AnimaLog "Replaced blocked anima.exe with anima.cmd launcher"
+    } else {
+        Write-AnimaLog "Installed anima.cmd launcher"
+    }
+}
+
+function Invoke-AnimaCli([string]$ScriptsDir, [string[]]$CliArgs) {
+    $venvPython = Join-Path $ScriptsDir "python.exe"
+    & $venvPython -c "import sys; from anima.app.cli import main; raise SystemExit(main(sys.argv[1:]))" @CliArgs
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
 $python = Find-Python
 if (-not $python) {
     Write-AnimaFail "Python 3.10+ is required. Install from https://www.python.org/downloads/"
@@ -97,7 +120,7 @@ Write-AnimaLog "Virtual env: $AnimaVenv"
 
 if ($DryRun) {
     Write-AnimaLog "[dry-run] would create venv and pip install git+$AnimaRepo@$AnimaBranch"
-    if (-not $NoOnboard) { Write-AnimaLog "[dry-run] would run: anima onboard --yes" }
+    if (-not $NoOnboard) { Write-AnimaLog "[dry-run] would run: python -m anima onboard --yes" }
     exit 0
 }
 
@@ -116,13 +139,14 @@ Write-AnimaLog "Installing Anima from $AnimaRepo ($AnimaBranch)..."
 python -m pip install "git+${AnimaRepo}@${AnimaBranch}"
 
 $scripts = Join-Path $AnimaVenv "Scripts"
+Install-AnimaLauncher $scripts
 Add-AnimaPath $scripts
 
 if ($NoOnboard) {
     Write-AnimaLog "Skipping onboard (-NoOnboard)."
 } else {
     Write-AnimaLog "Running onboard..."
-    anima onboard --yes
+    Invoke-AnimaCli $scripts @("onboard", "--yes")
 }
 
 Write-Host @"
