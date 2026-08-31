@@ -20,6 +20,7 @@ from anima.core.policies import system_preamble
 from anima.development.metrics import snapshot
 from anima.memory.consolidation import sleep as run_sleep
 from anima.memory.retrieval import build_context
+from anima.memory.factory import open_memory
 from anima.memory.sibyl_adapter import DisabledMemory, SibylAdapter
 from anima.memory.writer import (
     ensure_newborn,
@@ -55,12 +56,12 @@ class Runtime:
         if self.amnesia:
             self.memory: SibylAdapter | DisabledMemory = DisabledMemory()
         else:
-            self.memory = SibylAdapter(cfg.sibyl_db, cfg.tenant_id)
+            self.memory = open_memory(cfg)
         self.registry = BrainRegistry(list(cfg.brains), cfg.primary_brain_id, data_dir=cfg.data_dir)
         self.instinct = InstinctBrain("instinct")
         self.capabilities = CapabilityRegistry()
         self._apply_capability_grants()
-        self.mcp = McpRegistry(cfg)
+        self.mcp = McpRegistry(cfg, self.memory)
         self.base = BaseAdapter(cfg.base)
         self.session_messages: list[tuple[str, str]] = []
         self._birth_done = False

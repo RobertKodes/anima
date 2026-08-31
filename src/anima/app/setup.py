@@ -65,6 +65,37 @@ def doctor_report(cfg: AnimaConfig) -> list[dict[str, Any]]:
     else:
         rows.append(_ok("wallet file", True, "not created yet (safe default)"))
     rows.append(_ok("mainnet locked", not cfg.base.mainnet_enabled, "Base Sepolia / dry-run until you opt in"))
+    from anima.memory.factory import open_memory
+    from anima.memory.sibyl_adapter import SibylAdapter
+    from anima.memory.sibyl_credentials import resolve_sibyl_auth, sibyl_cli_on_path
+
+    auth = resolve_sibyl_auth(cfg)
+    memory = open_memory(cfg)
+    if isinstance(memory, SibylAdapter):
+        health = memory.health()
+        tier = health.get("tier") or auth.get("tier") or "free"
+        cap_detail = f"tier={tier}, db={health.get('path')}"
+        free = health.get("free_tier") or {}
+        if isinstance(free, dict) and free.get("cap_bytes"):
+            used = free.get("used_bytes") or health.get("bytes") or 0
+            cap_detail += f", cap {used}/{free['cap_bytes']} bytes"
+        rows.append(_ok("sibyl store", health.get("ok", False), cap_detail))
+        memory.close()
+    else:
+        rows.append(_ok("sibyl store", False, "amnesia mode — retrieval disabled"))
+    cli = sibyl_cli_on_path()
+    rows.append(
+        _ok(
+            "sibyl CLI",
+            cli is not None,
+            cli or "pip install sibyl-memory-cli[mcp] · then sibyl init for Pro",
+        )
+    )
+    if auth.get("account_id"):
+        rows.append(_ok("sibyl Pro auth", True, f"account {str(auth['account_id'])[:8]}…"))
+    else:
+        rows.append(_ok("sibyl Pro auth", True, "optional — free tier local SQLite works"))
+    rows.append(_ok("built-in MCP", True, "anima-sibyl (search, recent, self, people) in-process"))
     return rows
 
 

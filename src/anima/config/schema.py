@@ -72,6 +72,7 @@ class AnimaConfig(BaseModel):
     allow_web_crawl: bool = False
     allow_explore: bool = False
     active_experience_id: str = ""
+    sibyl_tier: str = ""
     mcp_servers: list[McpServerConfig] = Field(default_factory=list)
     channels: list[ChannelConfig] = Field(default_factory=list)
     log_path: Path | None = None
@@ -164,6 +165,8 @@ def _merge(cfg: AnimaConfig, raw: dict[str, Any]) -> AnimaConfig:
         data["allow_explore"] = bool(raw["allow_explore"])
     if "active_experience_id" in raw:
         data["active_experience_id"] = str(raw["active_experience_id"])
+    if "sibyl_tier" in raw:
+        data["sibyl_tier"] = str(raw["sibyl_tier"])
     if "amnesia" in raw:
         data["amnesia"] = bool(raw["amnesia"])
     if "log_path" in raw:
@@ -245,6 +248,7 @@ def _to_toml(cfg: AnimaConfig) -> str:
         f"allow_web_crawl = {str(cfg.allow_web_crawl).lower()}\n"
         f"allow_explore = {str(cfg.allow_explore).lower()}\n"
         f'active_experience_id = "{cfg.active_experience_id}"\n'
+        f'sibyl_tier = "{cfg.sibyl_tier}"\n'
         f"amnesia = {str(cfg.amnesia).lower()}\n\n"
         "[base]\n"
         f'network = "{base.network}"\n'

@@ -12,12 +12,8 @@ capability = "web_fetch"
 [[skills]]
 capability = "explore"
 
-[[mcp]]
-id = "sibyl"
-title = "Sibyl Memory MCP"
-command = "sibyl"
-args = ["mcp"]
-optional = true
+# Sibyl Memory tools (search, recent, self, people) ship in-process as anima-sibyl.
+# Use /mcp list and /mcp call anima-sibyl search {"query": "..."} — no subprocess.
 
 [personality]
 tone = "curious, precise, cites sources"

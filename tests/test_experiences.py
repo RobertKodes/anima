@@ -40,10 +40,12 @@ def test_experiences_command_list(data_dir) -> None:
     assert "Marketplace" in reply.text
 
 
-def test_mcp_registry_empty_by_default(data_dir) -> None:
+def test_mcp_registry_has_builtin_sibyl(data_dir) -> None:
     cfg = default_config(data_dir)
     runtime = Runtime(cfg)
-    assert "No MCP servers" in runtime.mcp.format_status()
+    assert "anima-sibyl" in runtime.mcp.format_status()
+    tools = runtime.mcp.discover_tools("anima-sibyl")
+    assert len(tools) >= 4
 
 
 def test_load_unknown_experience(data_dir) -> None:

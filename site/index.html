@@ -23,13 +23,14 @@
     <a class="logo" href="index.html" aria-label="Anima home">ANI<span>MA</span></a>
     <nav class="nav-main" aria-label="Primary">
       <a href="#memory">Memory</a>
+      <a href="#experiences">Experiences</a>
       <a href="#brains">Brains</a>
       <a href="#install">Install</a>
       <a class="btn btn-primary" href="https://github.com/RobertKodes/anima" rel="noopener noreferrer">GitHub</a>
     </nav>
   </header>
 
-  <div id="scroll-progress" class="scroll-progress" role="progressbar" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-label="Section progress"></div>
+  <div id="scroll-progress" class="scroll-progress" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" aria-label="Section progress"></div>
   <nav id="section-dots" class="section-dots" aria-label="Section navigation"></nav>
   <button type="button" id="scroll-toggle" class="btn scroll-toggle" aria-pressed="true">Standard scroll</button>
 
@@ -85,7 +86,45 @@
                 <strong>Decide</strong> — a stored 0-wei cap blocks Base spends after <code>/new-session</code> and brain swap.
               </div>
             </div>
+            <div class="flow-step">
+              <span class="flow-num">4</span>
+              <div>
+                <strong>Inspect</strong> — <code>/sibyl status</code>, <code>/memory search</code>, built-in <code>anima-sibyl</code> MCP (search, self, people) — same store as chat.
+              </div>
+            </div>
           </div>
+          <p class="lead" style="margin-top: 1.5rem;">
+            Pro tier: <code>sibyl init</code> → <code>anima sibyl setup</code>. Free tier works locally out of the box.
+            See <a href="https://github.com/RobertKodes/anima/blob/master/docs/SIBYL.md" rel="noopener noreferrer">docs/SIBYL.md</a>.
+          </p>
+        </div>
+      </section>
+
+      <!-- Experiences -->
+      <section id="experiences" class="section section-experiences" data-title="Experiences" aria-labelledby="experiences-title">
+        <div class="section-inner">
+          <p class="section-tag">Marketplace · MCP · channels</p>
+          <h2 id="experiences-title">Experiences bundle skills, Sibyl personality, and tools.</h2>
+          <p class="lead">
+            Not markdown skins. Scholar, Guardian, Messenger packs grant web skills, seed the self-model in Sibyl, and wire MCP — with in-process Sibyl memory tools (no subprocess).
+          </p>
+          <div class="card-grid">
+            <article class="card">
+              <h3>Scholar</h3>
+              <p><code>/fetch</code>, <code>/explore</code>, curious tone. Grounds answers in Sibyl recall across sessions.</p>
+            </article>
+            <article class="card">
+              <h3>Guardian</h3>
+              <p>Policy-first posture. Spending caps and refusal logic stay in memory, not the prompt.</p>
+            </article>
+            <article class="card">
+              <h3>Messenger</h3>
+              <p>Telegram and Discord channels — same being, same Sibyl store, different surface.</p>
+            </article>
+          </div>
+          <p class="lead" style="margin-top: 1.5rem;">
+            <code>anima experiences apply scholar</code> · <code>/mcp call anima-sibyl search {"query": "…"}</code>
+          </p>
         </div>
       </section>
 
@@ -174,7 +213,8 @@
         <h4>Project</h4>
         <ul class="footer-links">
           <li><a href="https://github.com/RobertKodes/anima" rel="noopener noreferrer">Source code</a></li>
-          <li><a href="https://github.com/RobertKodes/anima/blob/master/README.md" rel="noopener noreferrer">Documentation</a></li>
+          <li><a href="https://github.com/RobertKodes/anima/blob/master/docs/SIBYL.md" rel="noopener noreferrer">Sibyl architecture</a></li>
+          <li><a href="https://github.com/RobertKodes/anima/blob/master/docs/HACKATHON.md" rel="noopener noreferrer">Hackathon path</a></li>
           <li><a href="https://github.com/RobertKodes/anima/blob/master/LICENSE" rel="noopener noreferrer">MIT License</a></li>
         </ul>
       </div>

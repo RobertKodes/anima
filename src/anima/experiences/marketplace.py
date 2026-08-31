@@ -123,6 +123,9 @@ def apply_experience(cfg: AnimaConfig, memory: Memory, exp_id: str, *, install: 
 
     cfg.mcp_servers = []
     for item in pack.manifest.mcp:
+        # Built-in in-process Sibyl bridge — no external `sibyl mcp` subprocess required.
+        if item.id in {"sibyl", "anima-sibyl"}:
+            continue
         cfg.mcp_servers.append(
             McpServerConfig(
                 id=item.id,

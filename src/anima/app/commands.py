@@ -62,6 +62,46 @@ def cmd_status(runtime: Runtime, _args: list[str]) -> Reply:
     return Reply(text="\n".join(lines), data=data)
 
 
+def cmd_sibyl(runtime: Runtime, args: list[str]) -> Reply:
+    from anima.memory.sibyl_adapter import SibylAdapter
+    from anima.memory.sibyl_credentials import format_sibyl_status
+
+    verb = args[0] if args else "status"
+    if verb in {"status", "health"}:
+        health = runtime.memory.health()
+        return Reply(text=format_sibyl_status(runtime.cfg, health), data=health)
+    if not isinstance(runtime.memory, SibylAdapter) or not runtime.memory.enabled:
+        return Reply(text="Sibyl memory is off (amnesia mode). Restart without --amnesia.")
+    if verb == "lint":
+        report = runtime.memory.lint()
+        lines = ["Sibyl lint report:"]
+        for key, value in sorted(report.items()):
+            if value is not None and value != [] and value != {}:
+                lines.append(f"  {key}: {value}")
+        return Reply(text="\n".join(lines) if len(lines) > 1 else str(report), data=report)
+    if verb == "learn":
+        mode = args[1] if len(args) > 1 else "local-deterministic"
+        report = runtime.memory.learn(mode=mode)
+        return Reply(text=f"Sibyl learn ({mode}) finished.\n{report}", data=report)
+    if verb == "skills":
+        status = args[1] if len(args) > 1 else "pending"
+        rows = runtime.memory.list_skill_proposals(status=status, limit=15)
+        if not rows:
+            return Reply(text=f"No skill proposals ({status}).")
+        lines = [f"Sibyl skill proposals ({status}):"]
+        for row in rows:
+            lines.append(f"- {row.get('name') or row.get('id')}: {row.get('summary') or row}")
+        return Reply(text="\n".join(lines), data={"proposals": rows})
+    if verb == "setup":
+        from anima.app.sibyl_setup import run_sibyl_setup
+
+        run_sibyl_setup(runtime.cfg.data_dir, yes=True)
+        return Reply(text="Sibyl setup finished. Run /sibyl status to inspect the store.")
+    return Reply(
+        text="Usage: /sibyl status | /sibyl lint | /sibyl learn [mode] | /sibyl skills [pending] | /sibyl setup"
+    )
+
+
 def cmd_memory(runtime: Runtime, args: list[str]) -> Reply:
     if not args or args[0] == "recent":
         events = runtime.memory.read_events(limit=12)
@@ -252,7 +292,7 @@ def cmd_experiences(runtime: Runtime, args: list[str]) -> Reply:
         try:
             pack = apply_experience(runtime.cfg, runtime.memory, args[1])
             runtime._apply_capability_grants()
-            runtime.mcp = McpRegistry(runtime.cfg)
+            runtime.mcp = McpRegistry(runtime.cfg, runtime.memory)
             return Reply(
                 text=f"Applied experience {pack.manifest.title}. Sibyl updated. Skills and MCP configured.",
                 notices=[f"experience:{pack.id}"],
@@ -406,6 +446,10 @@ HELP = [
     ("/status", "Age, stage, memory health, brains, Base."),
     ("/memory search <q>", "Inspect Sibyl memories."),
     ("/memory recent", "Inspect recent experiences."),
+    ("/sibyl status", "Sibyl tier, cap, auth, and architecture hint."),
+    ("/sibyl lint", "Run Sibyl Memory lint on the local store."),
+    ("/sibyl learn", "Consolidate journal into entities (Sibyl learn)."),
+    ("/sibyl skills", "List pending skill proposals from Sibyl."),
     ("/self", "Inspectable self-model and evidence."),
     ("/people", "Known relationships."),
     ("/goals", "Active and completed goals."),
@@ -439,6 +483,7 @@ COMMANDS: dict[str, Handler] = {
     "/chat": cmd_chat,
     "/status": cmd_status,
     "/memory": cmd_memory,
+    "/sibyl": cmd_sibyl,
     "/self": cmd_self,
     "/people": cmd_people,
     "/goals": cmd_goals,
@@ -466,6 +511,9 @@ SLASH_PREFIXES = [
     "/status",
     "/memory recent",
     "/memory search ",
+    "/sibyl status",
+    "/sibyl lint",
+    "/sibyl learn",
     "/self",
     "/people",
     "/goals",

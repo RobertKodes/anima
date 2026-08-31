@@ -86,11 +86,30 @@ class SibylAdapter:
 
     enabled = True
 
-    def __init__(self, db_path: Path, tenant_id: str) -> None:
+    def __init__(
+        self,
+        db_path: Path,
+        tenant_id: str,
+        *,
+        tier: str = "free",
+        account_id: str | None = None,
+        session_token: str | None = None,
+        credentials_claim: dict | None = None,
+        credentials_signature: str | None = None,
+    ) -> None:
         self.path = Path(db_path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.tenant_id = tenant_id
-        self.client = MemoryClient.local(self.path, tenant_id=tenant_id, tier="free")
+        self.tier = tier
+        self.client = MemoryClient.local(
+            self.path,
+            tenant_id=tenant_id,
+            tier=tier,
+            account_id=account_id,
+            session_token=session_token,
+            credentials_claim=credentials_claim,
+            credentials_signature=credentials_signature,
+        )
 
     def health(self) -> dict[str, Any]:
         try:
@@ -160,6 +179,34 @@ class SibylAdapter:
 
     def get_reference(self, key: str) -> dict[str, Any] | None:
         return self.client.get_reference(key)
+
+    def lint(self) -> dict[str, Any]:
+        report = self.client.lint()
+        if hasattr(report, "model_dump"):
+            return report.model_dump()
+        if hasattr(report, "__dict__"):
+            return dict(report.__dict__)
+        return {"report": str(report)}
+
+    def learn(self, *, mode: str = "local-deterministic") -> dict[str, Any]:
+        report = self.client.learn(mode=mode)
+        if hasattr(report, "model_dump"):
+            return report.model_dump()
+        if hasattr(report, "__dict__"):
+            return dict(report.__dict__)
+        return {"report": str(report)}
+
+    def list_skill_proposals(self, *, status: str = "pending", limit: int = 20) -> list[dict[str, Any]]:
+        rows = self.client.list_skill_proposals(status=status, limit=limit)
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            if isinstance(row, dict):
+                out.append(row)
+            elif hasattr(row, "model_dump"):
+                out.append(row.model_dump())
+            else:
+                out.append({"value": str(row)})
+        return out
 
     def close(self) -> None:
         storage = getattr(self.client, "_storage", None)

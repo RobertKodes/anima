@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "verb",
         nargs="?",
-        help="onboard | setup | doctor | experiences | channel | chat | a /command (for example /status)",
+        help="onboard | setup | doctor | sibyl | experiences | channel | chat | a /command (for example /status)",
     )
     parser.add_argument("rest", nargs="*", help="Extra words for chat or /commands")
     args = parser.parse_args(argv)
@@ -108,6 +108,20 @@ def main(argv: list[str] | None = None) -> int:
         _apply_brain_override(cfg, args.brain, args.model)
     elif args.model and cfg.brains:
         cfg.brains[0].model = args.model
+
+    if args.verb == "sibyl":
+        from anima.app.sibyl_setup import run_sibyl_setup
+
+        sub = args.rest[0] if args.rest else "setup"
+        if sub in {"setup", "link"}:
+            return run_sibyl_setup(args.data, yes=args.yes, tier=args.rest[1] if len(args.rest) > 1 else None)
+        from anima.app.commands import cmd_sibyl
+        from anima.core.runtime import Runtime
+
+        runtime = Runtime(cfg, amnesia=cfg.amnesia)
+        reply = cmd_sibyl(runtime, args.rest or ["status"])
+        Console().print(reply.text)
+        return 0
 
     if args.verb == "doctor":
         from anima.app.commands import cmd_doctor
