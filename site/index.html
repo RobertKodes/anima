@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Anima — a local-first AI being. Sibyl Memory is identity. The LLM is a replaceable brain.">
-  <meta name="theme-color" content="#0a0c10">
+  <meta name="theme-color" content="#140f0a">
   <meta property="og:title" content="Anima — one being, many brains">
   <meta property="og:description" content="Persistent identity in Sibyl Memory. Graphical CLI and plain REPL. Local-first, MIT.">
   <meta property="og:type" content="website">
@@ -12,16 +12,26 @@
   <title>Anima — local-first AI being</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Space+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23e8a04a' width='100' height='100'/><text y='.9em' x='.15em' font-size='90'>A</text></svg>">
   <script src="js/motion-prefs.js"></script>
 </head>
 <body>
+  <div class="parallax-root" aria-hidden="true">
+    <div class="y2k-orb y2k-orb--1" data-parallax="0.12"></div>
+    <div class="y2k-orb y2k-orb--2" data-parallax="0.22"></div>
+    <div class="y2k-orb y2k-orb--3" data-parallax="0.08"></div>
+    <div class="y2k-orb y2k-orb--4" data-parallax="0.18"></div>
+  </div>
+  <div class="scanlines" aria-hidden="true"></div>
+
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <header class="site-header" role="banner">
+  <header class="site-header terminal-bar" role="banner">
+    <div class="terminal-dots" aria-hidden="true"><span></span><span></span><span></span></div>
     <a class="logo" href="index.html" aria-label="Anima home">ANI<span>MA</span></a>
+    <span class="terminal-bar-title">~/sibyl/being — graphical cli</span>
     <nav class="nav-main" aria-label="Primary">
       <a href="#memory">Memory</a>
       <a href="#experiences">Experiences</a>
@@ -39,8 +49,15 @@
       <section id="hero" class="section section-hero" data-title="Intro" aria-labelledby="hero-title">
         <div class="dot-grid-bg" aria-hidden="true"></div>
         <div class="section-inner hero-shell">
-          <div class="hero-grid">
-            <div class="hero-copy">
+          <div class="terminal-window glass-panel">
+            <div class="terminal-titlebar">
+              <div class="terminal-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <strong>anima</strong> — session · sibyl connected · brain online
+            </div>
+            <div class="terminal-body">
+              <p class="terminal-prompt"><span class="user">you@anima</span>:<span class="path">~</span>$ anima --tui<span class="terminal-cursor" aria-hidden="true"></span></p>
+              <div class="hero-grid">
+                <div class="hero-copy" data-parallax="0.05">
               <p class="section-tag">Local-first · MIT · Sibyl Memory</p>
               <h1 id="hero-title" data-kinetic>
                 <span class="kinetic-line"><span class="kinetic-word">One</span> <span class="kinetic-word">being.</span></span>
@@ -56,9 +73,11 @@
                 <a class="btn btn-ghost" href="https://github.com/RobertKodes/anima/tree/master/recordings" rel="noopener noreferrer" data-magnetic>Watch demo</a>
               </div>
             </div>
-            <div class="canvas-wrap border-beam" role="img" aria-label="3D wireframe representation of Anima: core being with orbiting memory nodes">
+            <div class="canvas-wrap border-beam glass-panel" data-parallax="0.1" role="img" aria-label="3D wireframe representation of Anima: core being with orbiting memory nodes">
               <canvas id="scene3d"></canvas>
               <span class="canvas-label">being · sibyl · brains</span>
+            </div>
+              </div>
             </div>
           </div>
         </div>
@@ -67,6 +86,12 @@
       <!-- Memory -->
       <section id="memory" class="section section-memory" data-title="Memory" aria-labelledby="memory-title">
         <div class="section-inner">
+          <div class="terminal-window glass-panel">
+            <div class="terminal-titlebar">
+              <div class="terminal-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <strong>/memory</strong> — load-bearing · fts5 · sibyl
+            </div>
+            <div class="terminal-body">
           <p class="section-tag">Load-bearing memory</p>
           <h2 id="memory-title">Delete retrieval — not the store — and the being is gone.</h2>
           <p class="lead">
@@ -104,12 +129,20 @@
             Pro tier: <code>sibyl init</code> → <code>anima sibyl setup</code>. Free tier works locally out of the box.
             See <a href="https://github.com/RobertKodes/anima/blob/master/docs/SIBYL.md" rel="noopener noreferrer">docs/SIBYL.md</a>.
           </p>
+            </div>
+          </div>
         </div>
       </section>
 
       <!-- Experiences -->
       <section id="experiences" class="section section-experiences" data-title="Experiences" aria-labelledby="experiences-title">
         <div class="section-inner">
+          <div class="terminal-window glass-panel">
+            <div class="terminal-titlebar">
+              <div class="terminal-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <strong>/experiences</strong> — marketplace · mcp · channels
+            </div>
+            <div class="terminal-body">
           <p class="section-tag">Marketplace · MCP · channels</p>
           <h2 id="experiences-title">Experiences bundle skills, Sibyl personality, and tools.</h2>
           <p class="lead">
@@ -144,6 +177,8 @@
           <p class="lead" style="margin-top: 1.5rem;">
             <code>anima experiences apply scholar</code> · <code>/mcp call anima-sibyl search {"query": "…"}</code>
           </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -262,6 +297,12 @@
     </p>
   </footer>
 
+  <div class="terminal-statusbar" role="status">
+    <span class="accent">anima</span> · sibyl memory · <span id="status-stage">ready</span>
+    <span class="sep">|</span>
+    <span>F1 help · F3 sleep · ctrl+p palette</span>
+  </div>
+
   <aside id="cookie-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-title" aria-describedby="cookie-desc">
     <div class="cookie-inner">
       <p id="cookie-desc"><strong id="cookie-title">Cookies &amp; storage</strong> — We use essential local storage for scroll preferences and consent. No analytics load until you opt in. <a href="cookies.html">Cookie Policy</a></p>
@@ -282,6 +323,7 @@
   <script src="js/magnetic-buttons.js" defer></script>
   <script src="js/bento-cards.js" defer></script>
   <script src="js/scroll-reveal.js" defer></script>
+  <script src="js/parallax.js" defer></script>
   <script src="js/scroll.js" defer></script>
   <script src="js/scene3d.js" defer></script>
   <script src="js/consent.js" defer></script>

@@ -1,4 +1,77 @@
-/* Dot grid, border-beam, glow utilities */
+/* Terminal chrome, Y2K glass, scanlines, parallax orbs */
+
+/* Parallax floating orbs */
+.parallax-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.y2k-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
+  will-change: transform;
+}
+
+.y2k-orb--1 {
+  width: 420px;
+  height: 420px;
+  top: 8%;
+  left: -8%;
+  background: radial-gradient(circle, var(--y2k-pink) 0%, transparent 70%);
+}
+
+.y2k-orb--2 {
+  width: 360px;
+  height: 360px;
+  top: 45%;
+  right: -10%;
+  background: radial-gradient(circle, var(--y2k-cyan) 0%, transparent 70%);
+}
+
+.y2k-orb--3 {
+  width: 280px;
+  height: 280px;
+  bottom: 15%;
+  left: 25%;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+}
+
+.y2k-orb--4 {
+  width: 200px;
+  height: 200px;
+  top: 70%;
+  right: 20%;
+  background: radial-gradient(circle, var(--y2k-purple) 0%, transparent 70%);
+}
+
+html.no-motion .y2k-orb {
+  display: none;
+}
+
+/* CRT scanlines overlay */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  opacity: 0.4;
+}
+
+html.no-motion .scanlines {
+  display: none;
+}
 
 .dot-grid-bg {
   position: absolute;
@@ -7,19 +80,159 @@
   z-index: 0;
   background-image:
     radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
-  background-size: 24px 24px;
-  mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+  background-size: 20px 20px;
+  mask-image: linear-gradient(to bottom, black 30%, transparent 90%);
 }
 
-.dot-grid-bg::after {
+/* Glass panel — Y2K frosted */
+.glass-panel {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  box-shadow: var(--shadow-glass);
+  position: relative;
+}
+
+.glass-panel::before {
   content: "";
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
-  opacity: 0.5;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--y2k-glass-border);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+/* Terminal window chrome */
+.terminal-window {
+  border: 2px solid var(--border-heavy);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-terminal), var(--shadow-glow);
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--bg-elevated);
+  border-bottom: 2px solid var(--border-terminal);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.terminal-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.terminal-dots span:nth-child(1) {
+  background: linear-gradient(180deg, #ff8a80, var(--orange));
+}
+
+.terminal-dots span:nth-child(2) {
+  background: linear-gradient(180deg, #ffe082, var(--accent));
+}
+
+.terminal-dots span:nth-child(3) {
+  background: linear-gradient(180deg, var(--y2k-lime), #7dba6a);
+}
+
+.terminal-titlebar strong {
+  color: var(--text-prompt);
+  font-weight: 600;
+}
+
+.terminal-body {
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.terminal-prompt {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.terminal-prompt .user {
+  color: var(--text-prompt);
+}
+
+.terminal-prompt .path {
+  color: var(--y2k-cyan);
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  background: var(--text-prompt);
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+html.no-motion .terminal-cursor {
+  animation: none;
+  opacity: 1;
+}
+
+/* Status bar — matches TUI #statusbar */
+.terminal-statusbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: rgba(42, 32, 24, 0.85);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border-terminal);
+}
+
+.terminal-statusbar .sep {
+  margin: 0 10px;
+  opacity: 0.4;
+}
+
+.terminal-statusbar .accent {
+  color: var(--text-prompt);
+}
+
+body {
+  padding-bottom: 28px;
 }
 
 .border-beam {
@@ -30,25 +243,26 @@
 .border-beam::before {
   content: "";
   position: absolute;
-  inset: -1px;
+  inset: -2px;
   border-radius: inherit;
-  padding: 1px;
+  padding: 2px;
   background: conic-gradient(
     from var(--beam-angle, 0deg),
-    transparent 0deg,
-    var(--accent) 60deg,
-    var(--cyan) 120deg,
-    transparent 180deg,
-    transparent 360deg
+    var(--y2k-pink),
+    var(--y2k-cyan),
+    var(--accent),
+    var(--y2k-purple),
+    var(--orange),
+    var(--y2k-pink)
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: 0.85;
+  opacity: 0.75;
   pointer-events: none;
   z-index: 1;
-  animation: beam-rotate 4s linear infinite;
+  animation: beam-rotate 6s linear infinite;
 }
 
 @property --beam-angle {
@@ -65,7 +279,7 @@
 
 html.no-motion .border-beam::before {
   animation: none;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .bento-glow {
@@ -77,8 +291,9 @@ html.no-motion .border-beam::before {
   transition: opacity 0.35s var(--ease-out-expo);
   background: radial-gradient(
     400px circle at var(--mx, 50%) var(--my, 50%),
-    var(--accent-dim),
-    transparent 60%
+    rgba(110, 231, 255, 0.2),
+    rgba(232, 160, 74, 0.15),
+    transparent 65%
   );
 }
 
@@ -89,4 +304,12 @@ html.no-motion .border-beam::before {
 
 html.no-motion .bento-glow {
   display: none;
+}
+
+[data-parallax] {
+  will-change: transform;
+}
+
+html.no-motion [data-parallax] {
+  will-change: auto;
 }
